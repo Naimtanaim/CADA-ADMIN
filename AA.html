@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PLT Duplicate & Report</title>
+<style>
+  body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; margin:30px; background:#f5f7fa; color:#333; }
+  h2 { text-align:center; margin-bottom:20px; }
+  .search-box { margin-bottom:20px; }
+  .search-box input { padding:10px; margin-right:6px; width:80px; }
+  .search-box button { padding:8px 20px; cursor:pointer; }
+
+  .table-container { max-height: 490px; overflow-y: auto; position: relative; margin-bottom: 20px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+  thead { background:#4a90e2; color:#fff; }
+  thead th { padding:12px; text-align:center; position: sticky; top:0; z-index:2; }
+  tbody td { padding:10px; border-bottom:1px solid #121; text-align:center; }
+  tbody tr:hover { background:#f1f7ff; }
+
+  button.delete-btn { background:#e74c3c; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; }
+  button.delete-btn:hover { background:#c0392b; }
+
+  .summary { display: flex; justify-content: space-between; background: #fff; padding: 15px 25px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-bottom: 10px; font-size: 22px; font-weight: bold; }
+
+  .upload-csv { position:absolute; top:20px; right:20px; }
+  .upload-csv button { background:#28a745; color:white; padding:10px 16px; border-radius:8px; font-weight:bold; cursor:pointer; }
+  .upload-csv button:hover { background:#1e7e34; }
+
+  #weightWarning { display: none; background-color: #e74c3c; color: white; font-weight: bold; text-align: center; padding: 15px; border-radius: 10px; margin: 15px auto; width: 80%; box-sizing: border-box; font-size: 20px; }
+  .btn-delete-all { position: absolute; top:90px; right: 50px; padding: 12px 24px; background: linear-gradient(135deg, #f1f1f1 0%, #ff4b2b 0%); color: white; font-size: 15px; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 15px rgba(0,0,0,0.2); transition: all 0.3s ease; }
+  .btn-delete-all:hover { transform: translateY(-2px); box-shadow: 0 1px 20px rgba(0,0,0,0.3); }
+
+  .btn-print-duplicate { position: absolute; top: 89px; right: 200px; padding: 12px 24px; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; font-size: 14px; font-weight: 500; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 15px rgba(0,0,0,0.2); transition: all 0.3s ease; }
+  .btn-print-duplicate:hover { transform: translateY(-2px); box-shadow: 0 1px 20px rgba(0,0,0,0.3); }
+
+  label { font-size: 18px; margin-right: 10px; }
+  input[type="number"] { padding: 6px 10px; font-size: 16px; width: 60px; margin-right: 10px; }
+  select { padding: 6px 10px; font-size: 16px; margin-right: 10px; }
+  .draggable-box { position: absolute; top: 10px; left: 50px; padding: 10px; border-radius: 10px; cursor: grab; user-select: none; font-family: Arial, sans-serif; }
+  .draggable-box:active { cursor: grabbing; }
+  .output { margin-top: 8px; font-weight: bold; color: #333; }
+</style>
+</head>
+<body>
+
+<div class="upload-csv"><a href="inputpl.html"><button>Upload CSV</button></a></div>
+
+<h2>栈板资料报表</h2>
+<button class="btn-delete-all">Hapus Semua</button>
+<button class="btn-print-duplicate" onclick="window.location.href='printer.html'">打印功能点评</button>
+
+<div class="search-box">
+  <input type="number" id="startNo" placeholder="PLT 1">
+  <input type="number" id="endNo" placeholder="PLT 2">
+  <button id="duplicateBtn">OK</button>
+</div>
+
+<div class="draggable-box" id="dragBox">
+  <label for="palletWeight">桟板重量:</label>
+  <input type="number" id="palletWeight" placeholder="">
+  <button id="setWeightBtn" onclick="setWeight(this)">设定</button>
+  <div class="output" id="result"></div>
+</div>
+
+<div class="summary">
+  <div>Total (材積): <span id="totalCbm">0</span></div>
+  <div>Total Box (箱數): <span id="totalBox">0</span></div>
+  <div>Total Berat(重量): <span id="totalWeight">0</span> kg</div>
+</div>
+
+<div class="summary">
+  <div>
+    <label for="pricePerKg">Harga / Kg:</label>
+    <input type="number" id="pricePerKg" value="" min="0">
+    <label for="currencyFormat">Mata Uang:</label>
+    <select id="currencyFormat">
+      <option value="TWD">NT$</option>
+      <option value="CNY">RMB</option>
+      <option value="IDR">Rp</option>
+      <option value="USD">USD</option>
+    </select>
+  </div>
+  <div>Total Uang: <span id="totalMoney">0</span></div>
+</div>
+
+<div id="weightWarning">Total总重量超过4000kg!</div>
+
+<div class="table-container">
+  <table id="pltTable">
+    <thead>
+      <tr>
+        <th>PLT</th>
+        <th>SIZE</th>
+        <th>長*寬*高</th>
+        <th>材積</th>
+        <th>CBM</th>
+        <th>箱數</th>
+        <th>重量</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const SUPABASE_URL = 'https://uusljhegkvahcjkaxqkz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const tbody = document.querySelector("#pltTable tbody");
+const weightWarning = document.getElementById("weightWarning");
+const pricePerKgEl = document.getElementById("pricePerKg");
+const currencyEl = document.getElementById("currencyFormat");
+const totalMoneyEl = document.getElementById("totalMoney");
+
+let palletWeight = 0;
+
+window.setWeight = async function(btn){
+  const value = parseFloat(document.getElementById("palletWeight").value);
+  if(isNaN(value)){ alert("请输入有效的重量!"); return; }
+  palletWeight = value;
+
+  // Disable button
+  btn.disabled = true;
+  btn.style.backgroundColor = '#ccc';
+  btn.style.cursor = 'not-allowed';
+
+  document.getElementById("result").innerText = "当前桟板重量: " + palletWeight + " kg";
+
+  const { data: rows, error } = await supabase.from('plt_table_duplicate').select('NO, 重量');
+  if(error){ alert("获取数据失败: "+error.message); return; }
+
+  for(const row of rows){
+    const newWeight = (row.重量||0)+palletWeight;
+    await supabase.from('plt_table_duplicate').update({重量:newWeight}).eq('NO',row.NO);
+  }
+
+  alert("✅ Semua baris telah diperbarui + " + palletWeight + " kg");
+  loadData();
+  calculateTotals();
+};
+
+function formatCurrency(amount, currency){
+  if(isNaN(amount)||amount===null) return '';
+
+  let locale="en-US"; // default
+  switch(currency){
+    case "TWD": locale="zh-TW"; break;
+    case "IDR": locale="id-ID"; break;
+    case "USD": locale="en-US"; break;
+    case "CNY": locale="zh-CN"; break;
+  }
+
+  try{
+    // pakai minimumFractionDigits 0 dan maksimum 2 agar nol di belakang tidak muncul berlebihan
+    return new Intl.NumberFormat(locale,{
+      style:"currency",
+      currency:currency,
+      minimumFractionDigits:2,
+      maximumFractionDigits:0,
+    }).format(amount);
+  }catch(e){
+    // fallback manual
+    return currency+" "+parseFloat(amount.toFixed(2));
+  }
+}
+
+async function loadData(){
+  tbody.innerHTML='';
+  const { data, error } = await supabase.from('plt_table_duplicate').select('*');
+  if(error){ console.error(error); return; }
+  data.forEach(row=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${row.NO}</td>
+      <td>${row.SIZE}</td>
+      <td>${row["長*寬*高"]}</td>
+      <td>${row.材積}</td>
+      <td>${row.CBM}</td>
+      <td>${row.箱數}</td>
+      <td>${row.重量}</td>
+      <td><button class="delete-btn">Hapus 删除</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  addDeleteEvents(); calculateTotals();
+}
+
+function calculateTotals(){
+  const rows = document.querySelectorAll("#pltTable tbody tr");
+  let totalCbm=0, totalBox=0, totalWeight=0;
+  rows.forEach(row=>{
+    totalCbm += parseFloat(row.cells[3].innerText)||0;
+    totalBox += parseFloat(row.cells[5].innerText)||0;
+    totalWeight += parseFloat(row.cells[6].innerText)||0;
+  });
+
+  // Tambahkan pallet weight
+  //*totalWeight += palletWeight;*//
+
+  document.getElementById("totalCbm").innerText = totalCbm.toFixed(2);
+  document.getElementById("totalBox").innerText = totalBox;
+  document.getElementById("totalWeight").innerText = totalWeight;
+
+  weightWarning.style.display = totalWeight>4000?"block":"none";
+
+  const pricePerKg=parseFloat(pricePerKgEl.value)||0;
+  const currency=currencyEl.value||"TWD";
+  totalMoneyEl.innerText=formatCurrency(totalWeight*pricePerKg, currency);
+}
+
+function addDeleteEvents(){
+  document.querySelectorAll(".delete-btn").forEach(btn=>{
+    btn.onclick=async function(){
+      const tr=this.closest("tr");
+      const no=tr.cells[0].innerText;
+      const { error } = await supabase.from('plt_table_duplicate').delete().eq('NO',no);
+      if(error){ alert("Gagal hapus"); return; }
+      tr.remove(); calculateTotals();
+    }
+  });
+}
+
+document.querySelector('.btn-delete-all').addEventListener('click', async ()=>{
+  if(!confirm("⚠️ Apakah Anda yakin ingin menghapus semua data PLT?")) return;
+  const { error } = await supabase.from('plt_table_duplicate').delete().neq('NO',0);
+  if(error){ alert("❌ Gagal menghapus data: "+error.message); }
+  else { tbody.innerHTML=''; calculateTotals(); alert("✅ Semua data berhasil dihapus!"); }
+});
+
+document.getElementById("duplicateBtn").onclick = async function(){
+  const startNo=parseInt(document.getElementById("startNo").value);
+  const endNo=parseInt(document.getElementById("endNo").value);
+  if(isNaN(startNo)||isNaN(endNo)){ alert("Isi nomor awal & akhir!"); return; }
+
+  const { data, error } = await supabase.from('plt_table').select('*').gte('NO',startNo).lte('NO',endNo);
+  if(error){ alert("Gagal ambil data"); return; }
+  if(!data.length){ alert("Data tidak ditemukan"); return; }
+
+  const { error: insertError } = await supabase.from('plt_table_duplicate').insert(data);
+  if(insertError){ alert("Gagal duplicate"); return; }
+
+  document.getElementById("startNo").value=''; document.getElementById("endNo").value='';
+  loadData();
+};
+
+pricePerKgEl.addEventListener('input', calculateTotals);
+currencyEl.addEventListener('change', calculateTotals);
+
+loadData();
+</script>
+</body>
+</html>

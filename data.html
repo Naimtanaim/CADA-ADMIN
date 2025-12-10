@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>出貨課包裝條碼</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Microsoft JhengHei', sans-serif;
+      font-size: 13px;
+      margin: 0;
+      padding: 10px;
+      background-color: #f9f9f9;
+    }
+    h3 { margin-bottom: 10px; }
+    .toolbar {
+      margin-bottom: 10px;
+    }
+    .toolbar input {
+      margin: 4px;
+      padding: 4px;
+      width: 150px;
+    }
+    .toolbar button {
+      padding: 5px 12px;
+      font-size: 13px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      text-align: center;
+    }
+    th {
+      background-color: #e0e0e0;
+    }
+    tr:nth-child(even) {
+      background-color: #fff;
+    }
+    tr:nth-child(odd) {
+      background-color: #f5f5f5;
+    }
+    .fixed-header {
+      position: sticky;
+      top: 0;
+      background-color: #e0e0e0;
+      z-index: 2;
+    }
+    @media (max-width: 768px) {
+      body { font-size: 12px; padding: 5px; }
+      .toolbar input { width: 100px; }
+      table { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <h3>出貨課條碼查詢</h3>
+
+  <div class="toolbar">
+    包裝機板: <input type="text" id="filter_packaging_board" />
+    客戶: <input type="text" id="filter_customer" />
+    公司號: <input type="text" id="filter_company_number" />
+    備料單號: <input type="text" id="filter_material_order_number" />
+    <button id="btnSearch">查詢</button>
+    <button id="btnDeleteSelected" style="color: red;">刪除選取</button>
+    <button onclick="window.location.href='input.html'">新增出貨資料</button>
+    <a href="import.html">
+  <button>Upload CSV</button>
+</a>
+
+  </div>
+
+  <table>
+    <thead>
+      <tr class="fixed-header">
+        <th>選取</th>
+        <th>包裝機板</th>
+        <th>箱號</th>
+        <th>備料單號</th>
+        <th>原始備料單號</th>
+        <th>公司號</th>
+        <th>包裝數量</th>
+        <th>客戶</th>
+        <th>客戶訂單號</th>
+        <th>送貨訂單號</th>
+        <th>打包時間</th>
+        <th>打包人員</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <!-- data dari Supabase -->
+    </tbody>
+  </table>
+
+  <script>
+    const SUPABASE_URL = 'https://uusljhegkvahcjkaxqkz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g';
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function fetchShipments() {
+      const packaging_board = document.getElementById('filter_packaging_board').value;
+      const customer = document.getElementById('filter_customer').value;
+      const company_number = document.getElementById('filter_company_number').value;
+      const material_order_number = document.getElementById('filter_material_order_number').value;
+
+      let query = supabaseClient.from('data').select('*');
+
+      if (packaging_board) {
+        query = query.ilike('packaging_board', `%${packaging_board}%`);
+      }
+      if (customer) {
+        query = query.ilike('customer', `%${customer}%`);
+      }
+      if (company_number) {
+        query = query.ilike('company_number', `%${company_number}%`);
+      }
+      if (material_order_number) {
+        query = query.ilike('material_order_number', `%${material_order_number}%`);
+      }
+
+      const { data, error } = await query.order('id', { ascending: false });
+
+      if (error) {
+        alert('查詢錯誤: ' + error.message);
+        return;
+      }
+
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12">無資料顯示</td></tr>';
+        return;
+      }
+
+      data.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="checkbox" data-id="${item.id}" /></td>
+          <td>${item.packaging_board || ''}</td>
+          <td>${item.box_number || ''}</td>
+          <td>${item.material_order_number || ''}</td>
+          <td>${item.original_material_order_number || ''}</td>
+          <td>${item.company_number || ''}</td>
+          <td>${item.packaging_quantity || ''}</td>
+          <td>${item.customer || ''}</td>
+          <td>${item.customer_order_number || ''}</td>
+          <td>${item.delivery_order_number || ''}</td>
+          <td>${item.packaging_time ? new Date(item.packaging_time).toLocaleString('zh-TW', { hour12: false }) : ''}</td>
+          <td>${item.packer || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function deleteSelectedRows() {
+      const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:checked');
+      const deleteIds = Array.from(checkboxes).map(cb => cb.dataset.id);
+
+      if (deleteIds.length === 0) {
+        alert('請選擇要刪除的項目');
+        return;
+      }
+
+      if (!confirm(`確定刪除 ${deleteIds.length} 筆資料嗎？`)) {
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from('data')
+        .delete()
+        .in('id', deleteIds);
+
+      if (error) {
+        alert('刪除錯誤: ' + error.message);
+        return;
+      }
+
+      fetchShipments();
+    }
+
+    document.getElementById('btnSearch').addEventListener('click', fetchShipments);
+    document.getElementById('btnDeleteSelected').addEventListener('click', deleteSelectedRows);
+
+    fetchShipments();
+  </script>
+</body>
+</html>

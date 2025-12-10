@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riwayat Barang Keluar - 出貨紀錄</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  body { font-family: "Inter","Microsoft JhengHei"; background:#f5f6fa; margin:0; padding:20px; color:#222;}
+  .container { max-width:1100px; margin:auto; background:white; padding:20px 24px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08);}
+  h1 { font-size:24px; margin-bottom:10px;}
+  .actions { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:15px;}
+  input, select { padding:8px 10px; border-radius:8px; border:1px solid #ccc;}
+  button { background:#007bff; color:white; border:none; border-radius:8px; padding:9px 14px; cursor:pointer; font-weight:600;}
+  button:hover { background:#0056d2;}
+  table { width:100%; border-collapse:collapse; font-size:14px;}
+  th, td { border:1px solid #e2e6ef; padding:8px; text-align:center;}
+  th { background:#f2f4fa; font-weight:bold;}
+  tr:nth-child(even) { background:#fafbff;}
+  .empty { text-align:center; color:#777; padding:20px 0;}
+  a.detail-link { color:#007bff; text-decoration:none; cursor:pointer;}
+  a.detail-link:hover { text-decoration:underline;}
+
+  /* Modal */
+  .modal { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; overflow:auto; background:rgba(0,0,0,0.5);}
+  .modal-content { background:white; margin:5% auto; padding:20px 24px; border-radius:10px; max-width:700px; box-shadow:0 4px 20px rgba(0,0,0,0.3); position:relative;}
+  .modal-close { position:absolute; top:12px; right:16px; font-size:20px; font-weight:bold; cursor:pointer;}
+  .modal table { margin-top:10px; font-size:13px; }
+  .modal th, .modal td { border:1px solid #ddd; padding:6px; }
+  .modal th { background:#f2f4fa; }
+  @media print { .actions { display:none; } body{background:white;} }
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>📦 Riwayat Barang Keluar</h1>
+
+  <div class="actions">
+    <div>
+      <input type="text" id="searchInput" placeholder="Cari nama barang / tempat...">
+      <select id="sortOrder">
+        <option value="desc">Urut: Terbaru</option>
+        <option value="asc">Urut: Terlama</option>
+      </select>
+      <button onclick="loadRiwayat()">🔍 Tampilkan</button>
+    </div>
+    <div>
+      
+    </div>
+  </div>
+
+  <table id="riwayatTable">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Nama Barang / Link</th>
+        <th>Tanggal Keluar</th>
+        <th>Nama Karyawan</th>
+      </tr>
+    </thead>
+    <tbody id="riwayatBody">
+      <tr><td colspan="4" class="empty">Memuat data...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal -->
+<div id="detailModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal()">&times;</span>
+    <h2>Detail Barang</h2>
+    <table id="modalTable">
+      <thead>
+        <tr>
+          <th>條碼</th>
+          <th>箱號</th>
+          <th>公司號</th>
+          <th>包裝數量</th>
+          <th>客戶</th>
+          <th>客戶訂單號</th>
+        </tr>
+      </thead>
+      <tbody id="modalBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://uusljhegkvahcjkaxqkz.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function loadRiwayat(){
+  const search = document.getElementById("searchInput").value.trim();
+  const order = document.getElementById("sortOrder").value;
+  const tbody = document.getElementById("riwayatBody");
+  tbody.innerHTML = `<tr><td colspan="4" class="empty">⏳ Memuat data...</td></tr>`;
+
+  let query = supabase.from("riwayat_keluar").select("*");
+
+  if(search){
+    query = query.or(`place.ilike.%${search}%,nama_barang.ilike.%${search}%`);
+  }
+
+  query = query.order("tanggal_keluar",{ascending: order==="asc"});
+
+  const { data, error } = await query;
+
+  if(error){
+    tbody.innerHTML = `<tr><td colspan="4" class="empty">❌ ${error.message}</td></tr>`;
+    return;
+  }
+  if(!data || data.length===0){
+    tbody.innerHTML = `<tr><td colspan="4" class="empty">Belum ada riwayat keluar</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = "";
+  data.forEach((r,i)=>{
+    const tanggal = new Date(r.tanggal_keluar).toLocaleString("id-ID");
+
+    // Barang link -> klik modal, tampil detail tabel
+    const barangLink = `<a class="detail-link" onclick='lihatDetailModal(${JSON.stringify(r.data_barang)})'>${r.nama_barang || r.barcode}</a>`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${barangLink}</td>
+      <td>${tanggal}</td>
+      <td>${r.nama_karyawan || "-"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Fungsi modal
+function lihatDetailModal(dataBarang){
+  const tbody = document.getElementById("modalBody");
+  tbody.innerHTML = "";
+  if(!Array.isArray(dataBarang)) dataBarang = [dataBarang]; // jika single object
+
+  dataBarang.forEach(item=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.barcode||""}</td>
+      <td>${item.box_number||""}</td>
+      <td>${item.company_number||""}</td>
+      <td>${item.packaging_quantity||""}</td>
+      <td>${item.customer||""}</td>
+      <td>${item.customer_order_number||""}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("detailModal").style.display="block";
+}
+
+function closeModal(){ document.getElementById("detailModal").style.display="none"; }
+
+window.onclick = function(event){
+  const modal = document.getElementById("detailModal");
+  if(event.target==modal) closeModal();
+}
+
+// Auto load
+loadRiwayat();
+</script>
+</body>
+</html>

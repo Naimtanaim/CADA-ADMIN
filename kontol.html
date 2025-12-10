@@ -7,223 +7,468 @@
 
 <!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <!-- JsBarcode -->
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
 <style>
-body { font-family: "Noto Sans TC", sans-serif; background: #f7f9fc; padding: 20px; margin: 0; }
-.container { max-width: 1000px; margin: 0 auto; }
-h1 { font-size: 26px; margin-bottom: 20px; }
+    :root {
+        --primary: #0b6cff;
+        --primary-dark: #084bc9;
+        --bg: #f3f5fa;
+        --card-bg: #ffffff;
+        --radius: 14px;
+        --shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
 
-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: center; font-size: 14px; }
-th { background: #f2f4f7; }
-a { color: #0b6cff; text-decoration: none; font-weight: 600; cursor:pointer; }
-a:hover { text-decoration: underline; }
+    body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: var(--bg);
+        margin: 0;
+        padding: 20px;
+        color: #333;
+    }
 
-.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
-input, button { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; }
-button { background: #0b6cff; color: white; border: none; font-weight: 600; cursor: pointer; }
-button:hover { background: #084bc9; }
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding-bottom: 60px;
+    }
 
-#detailModal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 9999; }
-.modal-content { background: white; padding: 20px; border-radius: 10px; width: 800px; max-width: 95%; max-height: 85vh; overflow-y: auto; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.print-btn, .close-btn { padding: 6px 12px; border-radius:6px; border:none; cursor:pointer; font-size:13px; font-weight:600; }
-.print-btn { background:#198754; color:white; margin-right:6px; }
-.print-btn:hover { background:#146c43; }
-.close-btn { background:#dc3545; color:white; }
-.close-btn:hover { background:#a71d2a; }
+    h1 {
+        font-size: 30px;
+        margin-bottom: 20px;
+        font-weight: 700;
+        color: #1d2d50;
+        letter-spacing: 1px;
+    }
 
-.modal-content table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.modal-content th, .modal-content td { border:1px solid #333; padding: 6px; text-align: center; }
-.barcode-thumb svg { height: 40px; width: 150px; }
+    /* Filter Section */
+    .filters {
+        background: var(--card-bg);
+        padding: 15px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 22px;
+    }
 
-/* Print styles */
-@media print {
-  body * { visibility: hidden; }
-  #printArea, #printArea * { visibility: visible; }
-  #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 10px; font-size: 12px; }
-  #printArea table { border-collapse: collapse; width: 100%; }
-  #printArea th, #printArea td { border:1px solid #333; padding:4px; text-align:center; font-size:12px; }
-  #printArea h2 { margin-bottom:10px; }
-  .barcode-thumb svg { height:40px; width:150px; }
-}
+    .filters input, .filters button {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid #d0d7e3;
+        font-size: 14px;
+    }
+
+    .filters input {
+        background: #f9fafc;
+    }
+
+    .filters button {
+        background: var(--primary);
+        border: none;
+        color: white;
+        font-weight: 600;
+        transition: 0.2s;
+        cursor: pointer;
+    }
+
+    .filters button:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    /* Summary Table */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+
+    th {
+        background: #eef2f8;
+        padding: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #1a2b48;
+    }
+
+    td {
+        padding: 12px;
+        border-top: 1px solid #eee;
+        font-size: 14px;
+    }
+
+    tr:hover {
+        background: #f7faff;
+    }
+
+    a {
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    /* Modal */
+    #detailModal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background: var(--card-bg);
+        box-shadow: var(--shadow);
+        border-radius: var(--radius);
+        width: 860px;
+        max-width: 96%;
+        max-height: 88vh;
+        overflow-y: auto;
+        padding: 22px;
+        animation: slideUp 0.25s ease-out;
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f2f7;
+        margin-bottom: 15px;
+    }
+
+    .modal-header span {
+        font-weight: 700;
+        font-size: 20px;
+        color: #1d2d50;
+    }
+
+    .print-btn, .close-btn {
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .print-btn {
+        background: #198754;
+        color: white;
+    }
+
+    .print-btn:hover {
+        background: #146c43;
+    }
+
+    .close-btn {
+        background: #dc3545;
+        color: white;
+    }
+
+    .close-btn:hover {
+        background: #b02a37;
+    }
+
+    /* Modal table */
+    .modal-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    .modal-content th, .modal-content td {
+        border: 1px solid #cfd6e4;
+        padding: 8px;
+        font-size: 13px;
+    }
+
+    .modal-content th {
+        background: #f4f6fb;
+        font-weight: 700;
+    }
+
+    .barcode-thumb svg {
+        height: 40px;
+        width: 150px;
+    }
+
+    /* Print styles */
+    @media print {
+        body * { visibility: hidden; }
+        #printArea, #printArea * { visibility: visible; }
+        #printArea {
+            position: absolute;
+            left: 0; top: 0;
+            width: 100%;
+            padding: 10px;
+            font-size: 12px;
+        }
+        #printArea table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        #printArea th, #printArea td {
+            border:1px solid #333;
+            padding:4px;
+        }
+    }
 </style>
 </head>
+
 <body>
 
 <div class="container">
-  <h1>出貨紀錄總覽</h1>
-  <div class="filters">
-    <input type="text" id="customerSearch" placeholder="輸入客戶名稱">
-    <label>出貨日期：</label>
-    <input type="date" id="dateFrom">
-    <span>～</span>
-    <input type="date" id="dateTo">
-    <button onclick="applyFilters()">查詢</button>
-    <button onclick="refreshData()">🔄 刷新</button>
-  </div>
+    <h1>出貨紀錄總覽</h1>
 
-  <table id="summaryTable">
-    <thead>
-      <tr>
-        <th>No.</th>
-        <th>出貨單號</th>
-        <th>客戶</th>
-        <th>出貨日期</th>
-      </tr>
-    </thead>
-    <tbody id="summaryBody">
-      <tr><td colspan="4">載入中...</td></tr>
-    </tbody>
-  </table>
+    <div class="filters">
+        <input type="text" id="customerSearch" placeholder="輸入客戶名稱">
+        <label>出貨日期：</label>
+        <input type="date" id="dateFrom">
+        <span>～</span>
+        <input type="date" id="dateTo">
+        <button onclick="applyFilters()">查詢</button>
+        <button onclick="refreshData()">🔄 刷新</button>
+    </div>
+
+    <table id="summaryTable">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>出貨單號</th>
+                <th>客戶</th>
+                <th>出貨日期</th>
+            </tr>
+        </thead>
+        <tbody id="summaryBody">
+            <tr><td colspan="4">載入中...</td></tr>
+        </tbody>
+    </table>
 </div>
 
 <!-- Modal Detail -->
 <div id="detailModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span id="detailTitle">出貨明細</span>
-      <div>
-        <button class="print-btn" onclick="printDetail()">🖨️ 列印</button>
-        <button class="close-btn" onclick="closeModal()">關閉</button>
-      </div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="detailTitle">出貨明細</span>
+            <div>
+                <button class="print-btn" onclick="printDetail()">🖨️ 列印</button>
+                <button class="close-btn" onclick="closeModal()">關閉</button>
+            </div>
+        </div>
+        <div id="detailContent"></div>
     </div>
-    <div id="detailContent"></div>
-  </div>
 </div>
 
 <!-- Print Area -->
 <div id="printArea" style="display:none;"></div>
 
 <script>
+
 const SUPABASE_URL = "https://uusljhegkvahcjkaxqkz.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Refresh summary
+
+// Load summary
 async function refreshData() {
-  const tbody = document.getElementById("summaryBody");
-  tbody.innerHTML = `<tr><td colspan="4">載入中...</td></tr>`;
-  const { data, error } = await supabase.from("barang_dikirim").select("*").order("shipped_at",{ascending:false});
-  if(error){ tbody.innerHTML = `<tr><td colspan="4">❌ ${error.message}</td></tr>`; return; }
-  renderSummary(data);
+    const tbody = document.getElementById("summaryBody");
+    tbody.innerHTML = `<tr><td colspan="4">載入中...</td></tr>`;
+
+    const { data, error } = await supabase
+        .from("barang_dikirim")
+        .select("*")
+        .order("shipped_at", { ascending: false });
+
+    if (error) {
+        tbody.innerHTML = `<tr><td colspan="4">❌ ${error.message}</td></tr>`;
+        return;
+    }
+
+    renderSummary(data);
 }
+
 
 // Apply filter
 async function applyFilters() {
-  const name = document.getElementById("customerSearch").value.trim();
-  const dateFrom = document.getElementById("dateFrom").value;
-  const dateTo = document.getElementById("dateTo").value;
-  let query = supabase.from("barang_dikirim").select("*");
-  if(name) query = query.ilike("customer", `%${name}%`);
-  if(dateFrom) query = query.gte("shipped_at", dateFrom);
-  if(dateTo) query = query.lte("shipped_at", dateTo + "T23:59:59");
-  const { data, error } = await query.order("shipped_at",{ascending:false});
-  if(error){ alert("搜尋錯誤: "+error.message); return; }
-  renderSummary(data);
+    const name = document.getElementById("customerSearch").value.trim();
+    const dateFrom = document.getElementById("dateFrom").value;
+    const dateTo = document.getElementById("dateTo").value;
+
+    let query = supabase.from("barang_dikirim").select("*");
+
+    if (name) query = query.ilike("customer", `%${name}%`);
+    if (dateFrom) query = query.gte("shipped_at", dateFrom);
+    if (dateTo) query = query.lte("shipped_at", dateTo + "T23:59:59");
+
+    const { data, error } = await query.order("shipped_at", { ascending: false });
+
+    if (error) {
+        alert("搜尋錯誤: " + error.message);
+        return;
+    }
+
+    renderSummary(data);
 }
 
-// Render summary table
-function renderSummary(data){
-  const tbody = document.getElementById("summaryBody");
-  tbody.innerHTML = "";
-  if(!data || data.length===0){ tbody.innerHTML = `<tr><td colspan="4">⚠️ 沒有資料</td></tr>`; return; }
 
-  const grouped = {};
-  data.forEach(d => {
-    const key = d.customer_order_number || "未指定";
-    if(!grouped[key]) grouped[key] = [];
-    grouped[key].push(d);
-  });
+// Render summary
+function renderSummary(data) {
 
-  Object.entries(grouped).forEach(([orderNo, rows], idx)=>{
-    const first = rows[0];
-    const date = first.shipped_at ? new Date(first.shipped_at).toLocaleString("zh-TW") : "";
-    const tr = document.createElement("tr");
-    
-    const tdNo = document.createElement("td"); tdNo.textContent = idx+1; tr.appendChild(tdNo);
+    const tbody = document.getElementById("summaryBody");
+    tbody.innerHTML = "";
 
-    const tdOrder = document.createElement("td");
-    const link = document.createElement("a");
-    link.textContent = orderNo;
-    link.href="#";
-    link.addEventListener("click", e=>{ e.preventDefault(); showDetail(orderNo); });
-    tdOrder.appendChild(link);
-    tr.appendChild(tdOrder);
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">⚠️ 沒有資料</td></tr>`;
+        return;
+    }
 
-    const tdCustomer = document.createElement("td"); tdCustomer.textContent = first.customer||""; tr.appendChild(tdCustomer);
-    const tdDate = document.createElement("td"); tdDate.textContent = date; tr.appendChild(tdDate);
+    const grouped = {};
 
-    tbody.appendChild(tr);
-  });
-}
+    data.forEach(d => {
+        const key = d.customer_order_number || "未指定";
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(d);
+    });
 
-// Show detail modal + barcode
-function showDetail(orderNo){
-  supabase.from("barang_dikirim").select("*").eq("customer_order_number", orderNo)
-    .then(({data,error})=>{
-      if(error){ alert("載入錯誤: "+error.message); return; }
+    Object.entries(grouped).forEach(([orderNo, rows], idx) => {
+        const first = rows[0];
+        const date = first.shipped_at
+            ? new Date(first.shipped_at).toLocaleString("zh-TW")
+            : "";
 
-      const htmlTable = `
-        <table>
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>條碼</th>
-              <th>箱號</th>
-              <th>公司號</th>
-              <th>包裝數量</th>
-              <th>客戶訂單號</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map((d,i)=>`
-              <tr>
-                <td>${i+1}</td>
-                <td><div class="barcode-thumb" id="print-bc-${i}"></div><div>${d.barcode||""}</div></td>
-                <td>${d.box_number||""}</td>
-                <td>${d.company_number||""}</td>
-                <td>${d.packaging_quantity||""}</td>
-                <td>${d.customer_order_number||""}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>`;
+        const tr = document.createElement("tr");
 
-      document.getElementById("detailContent").innerHTML = htmlTable;
-      document.getElementById("detailModal").style.display = "flex";
-      document.getElementById("detailTitle").textContent = `出貨明細：${orderNo}`;
+        tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td><a href="#" onclick="showDetail('${orderNo}')">${orderNo}</a></td>
+            <td>${first.customer || ""}</td>
+            <td>${date}</td>
+        `;
 
-      // Print area
-      const printArea = document.getElementById("printArea");
-      printArea.innerHTML = htmlTable;
-
-      // Generate barcode di print area
-      data.forEach((d,i)=>{
-        const div = document.getElementById(`print-bc-${i}`);
-        if(div){
-          const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-          div.appendChild(svg);
-          JsBarcode(svg, d.barcode || " ", {format:"CODE128", displayValue:false, height:40, margin:0});
-        }
-      });
+        tbody.appendChild(tr);
     });
 }
 
-function printDetail(){
-  const printArea = document.getElementById("printArea");
-  printArea.style.display = "block";
-  setTimeout(()=>{
-    window.print();
-    printArea.style.display = "none";
-  }, 300);
+
+// Show detail modal
+function showDetail(orderNo) {
+
+    supabase.from("barang_dikirim")
+        .select("*")
+        .eq("customer_order_number", orderNo)
+        .then(({ data, error }) => {
+
+            if (error) {
+                alert("載入錯誤: " + error.message);
+                return;
+            }
+
+            const htmlTable = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>條碼</th>
+                        <th>箱號</th>
+                        <th>公司號</th>
+                        <th>包裝數量</th>
+                        <th>客戶訂單號</th>
+                        <th>備料單號</th>
+                        <th>送貨訂單號</th>
+                        <th>打包人員</th>
+                        <th>倉庫位置</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map((d, i) => `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>
+                                <div class="barcode-thumb" id="print-bc-${i}"></div>
+                                <div>${d.barcode || ""}</div>
+                            </td>
+                            <td>${d.box_number || ""}</td>
+                            <td>${d.company_number || ""}</td>
+                            <td>${d.packaging_quantity || ""}</td>
+                            <td>${d.customer_order_number || ""}</td>
+                            <td>${d.preparation_number || ""}</td>
+                            <td>${d.delivery_order_number || ""}</td>
+                            <td>${d.packer || ""}</td>
+                            <td>${d.warehouse_location || ""}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>`;
+
+            document.getElementById("detailContent").innerHTML = htmlTable;
+            document.getElementById("detailTitle").textContent = `出貨明細：${orderNo}`;
+            document.getElementById("detailModal").style.display = "flex";
+
+            // Print Area
+            const printArea = document.getElementById("printArea");
+            printArea.innerHTML = htmlTable;
+
+            // Generate barcode
+            data.forEach((d, i) => {
+                const div = document.getElementById(`print-bc-${i}`);
+                if (div) {
+                    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    div.appendChild(svg);
+                    JsBarcode(svg, d.barcode || " ", {
+                        format: "CODE128",
+                        displayValue: false,
+                        height: 40,
+                        margin: 0
+                    });
+                }
+            });
+
+        });
 }
 
-function closeModal(){ document.getElementById("detailModal").style.display="none"; }
 
+// Print detail
+function printDetail() {
+    const printArea = document.getElementById("printArea");
+    printArea.style.display = "block";
+
+    setTimeout(() => {
+        window.print();
+        printArea.style.display = "none";
+    }, 300);
+}
+
+
+// Close modal
+function closeModal() {
+    document.getElementById("detailModal").style.display = "none";
+}
+
+
+// Initial load
 refreshData();
+
 </script>
+
 </body>
 </html>

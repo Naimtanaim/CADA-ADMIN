@@ -6,6 +6,7 @@
 <title>出貨課 - 存放位置資料</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
 <style>
   body { font-family: "Noto Sans TC", sans-serif; margin:0; background:#f6f7f9; padding:18px; }
   .container { max-width:900px; margin:0 auto; }
@@ -16,15 +17,15 @@
   .sheet-header { display:flex; justify-content:space-between; align-items:flex-start; }
   .title-left { font-size:28px; font-weight:700; }
   .meta { font-size:14px; color:#555; }
-  .barcode-top { text-align:right; }
   .barcode-top svg { width:320px; height:70px; }
   table { width:100%; border-collapse:collapse; margin-top:16px; font-size:14px; }
   th, td { border:1px solid #dfe3ee; padding:8px 10px; text-align:center; }
   th { background:#f9fafc; font-weight:bold; }
   .barcode-thumb svg { height:40px; width:180px; }
-  input[type=text] { padding:8px 10px; border:1px solid #ccc; border-radius:6px; }
   @media print { .actions { display:none; } body { background:white; } .sheet { box-shadow:none; border-radius:0; } }
-  .toast { visibility:hidden; min-width:200px; margin-left:-100px; background-color:#333; color:#fff; text-align:center; border-radius:8px; padding:12px; position:fixed; z-index:9999; left:50%; bottom:30px; font-size:14px; opacity:0; transition:opacity 0.5s,bottom 0.5s; }
+  .toast { visibility:hidden; min-width:200px; background-color:#333; color:#fff; text-align:center;
+           border-radius:8px; padding:12px; position:fixed; left:50%; bottom:30px; 
+           opacity:0; transform:translateX(-50%); transition:opacity .5s,bottom .5s; }
   .toast.show { visibility:visible; opacity:1; bottom:50px; }
   .toast.success { background-color:#28a745; }
   .toast.error { background-color:#dc3545; }
@@ -47,7 +48,7 @@
         <div class="title-left">出貨課</div>
         <div class="meta" style="margin-top:8px;">Print penyimpan 存放位置</div>
         <div id="dateNow" class="meta" style="margin-top:6px;"></div>
-        <div id="placeLabel" style="margin-top:12px; font-weight:600; color:#111;"></div>
+        <div id="placeLabel" style="margin-top:12px;font-weight:600;color:#111;"></div>
       </div>
       <div class="barcode-top">
         <svg id="mainBarcode"></svg>
@@ -70,14 +71,6 @@
         <tr><td colspan="7">請輸入存放位置後查詢...</td></tr>
       </tbody>
     </table>
-
-    <div style="display:flex; justify-content:flex-end; margin-top:20px;">
-      <div style="width:260px; border:1px solid #e6e9ef; padding:10px; font-size:13px;">
-        <div style="height:36px;"></div>
-        <div style="margin-top:8px; font-size:12px; color:#999;">檢查 / 日期</div>
-        <div style="margin-top:8px;">________________________</div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -92,59 +85,63 @@ document.getElementById("dateNow").textContent =
   "日期：" + new Date().toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"});
 
 function makeMainBarcode(text){
-  const svg = document.getElementById("mainBarcode");
-  svg.innerHTML = "";
-  JsBarcode(svg, text||"出貨課",{format:"CODE128",displayValue:true,height:60,fontSize:14,margin:0});
+  const svg=document.getElementById("mainBarcode");
+  svg.innerHTML="";
+  JsBarcode(svg,text||"出貨課",{format:"CODE128",displayValue:true,height:60,fontSize:14,margin:0});
 }
 makeMainBarcode("出貨課");
 
-function showToast(msg, success=true){
-  const toast = document.getElementById("toast");
-  toast.textContent = msg;
-  toast.className = `toast show ${success ? 'success':'error'}`;
-  setTimeout(()=>{ toast.className = 'toast'; }, 2500);
+function showToast(msg, ok=true){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.className=`toast show ${ok?'success':'error'}`;
+  setTimeout(()=>{ t.className='toast'; },2500);
 }
 
 async function refreshData(){
-  const { data, error } = await supabase.from("gudang_penyimpanan").select("*").order("id",{ascending:false}).limit(10);
+  const {data,error}=await supabase.from("gudang_penyimpanan")
+                                   .select("*")
+                                   .order("id",{ascending:false})
+                                   .limit(10);
   renderTable(data,error);
 }
 
 async function filterByPlace(){
-  const input = document.getElementById("placeInput");
-  const place = input.value.trim();
-  const tbody = document.getElementById("tableBody");
-  const placeLabel = document.getElementById("placeLabel");
-  tbody.innerHTML = `<tr><td colspan="7">載入中...</td></tr>`;
-  placeLabel.textContent = "";
+  const place=document.getElementById("placeInput").value.trim();
+  const tbody=document.getElementById("tableBody");
+  const placeLabel=document.getElementById("placeLabel");
+  tbody.innerHTML=`<tr><td colspan="7">載入中...</td></tr>`;
+  placeLabel.textContent="";
 
   if(!place){
-    tbody.innerHTML = `<tr><td colspan="7">⚠️ 請輸入存放位置</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="7">⚠️ 請輸入存放位置</td></tr>`;
     makeMainBarcode("出貨課");
     return;
   }
 
-  const { data, error } = await supabase.from("gudang_penyimpanan").select("*").eq("place",place).order("id",{ascending:false});
-  let uniqueData=[], seen=new Set();
-  data?.forEach(row=>{ if(!seen.has(row.barcode)){ seen.add(row.barcode); uniqueData.push(row); } });
-  uniqueData.sort((a,b)=>(a.barcode||"").localeCompare(b.barcode||""));
+  const {data,error}=await supabase.from("gudang_penyimpanan")
+                                   .select("*")
+                                   .eq("place",place)
+                                   .order("id",{ascending:false});
 
-  placeLabel.textContent = "存放位置：" + place;
+  placeLabel.textContent="存放位置：" + place;
   makeMainBarcode(place);
-  renderTable(uniqueData,error);
-  setTimeout(()=>{ input.value=""; input.focus(); },200);
+  renderTable(data,error);
+
+  setTimeout(()=>{ document.getElementById("placeInput").value=""; },200);
 }
 
 function renderTable(data,error){
-  const tbody = document.getElementById("tableBody");
-  tbody.innerHTML = "";
+  const tbody=document.getElementById("tableBody");
+  tbody.innerHTML="";
+
   if(error){ tbody.innerHTML=`<tr><td colspan="7">❌ 錯誤: ${error.message}</td></tr>`; return; }
   if(!data||data.length===0){ tbody.innerHTML=`<tr><td colspan="7">⚠️ 沒有找到資料</td></tr>`; return; }
 
-  data.forEach((row,index)=>{
+  data.forEach((row,i)=>{
     const tr=document.createElement("tr");
     tr.innerHTML=`
-      <td>${index+1}</td>
+      <td>${i+1}</td>
       <td><div class="barcode-thumb"><svg id="bc-${row.id}"></svg></div><div style="font-size:12px;color:#555;">${row.barcode||""}</div></td>
       <td>${row.box_number||""}</td>
       <td>${row.company_number||""}</td>
@@ -158,34 +155,50 @@ function renderTable(data,error){
 }
 
 async function shipAll(){
-  const placeLabel = document.getElementById("placeLabel").textContent;
-  const place = placeLabel.replace("存放位置：","");
-  if(!place){ showToast("⚠️ 請先查詢存放位置", false); return; }
+  const placeText=document.getElementById("placeLabel").textContent;
+  const place=placeText.replace("存放位置：","");
 
-  const { data, error } = await supabase.from("gudang_penyimpanan").select("*").eq("place", place);
-  if(error || !data || data.length===0){ showToast("⚠️ 沒有資料可出貨", false); return; }
+  if(!place){
+    showToast("⚠️ 請先查詢存放位置",false);
+    return;
+  }
 
-  const items = data.map(d => ({
-    barcode: d.barcode,
-    box_number: d.box_number,
-    company_number: d.company_number,
-    packaging_quantity: d.packaging_quantity,
-    customer: d.customer,
-    customer_order_number: d.customer_order_number,
-    shipped_at: new Date().toISOString()
+  const {data,error}=await supabase.from("gudang_penyimpanan")
+                                   .select("*")
+                                   .eq("place",place);
+
+  if(error||!data||data.length===0){
+    showToast("⚠️ 沒有資料可出貨",false);
+    return;
+  }
+
+  // langsung simpan tanpa input
+  const items=data.map(d=>({
+    barcode:d.barcode,
+    box_number:d.box_number,
+    company_number:d.company_number,
+    packaging_quantity:d.packaging_quantity,
+    customer:d.customer,
+    customer_order_number:d.customer_order_number,
+    shipped_at:new Date().toISOString(),
+
+    preparation_number:d.preparation_number || "",
+    delivery_order_number:d.delivery_order_number || "",
+    packer:d.packer || "",
+    warehouse_location:d.place || ""
   }));
 
-  const { error: insertErr } = await supabase.from("barang_dikirim").insert(items);
-  if(insertErr){ showToast("❌ 儲存失敗", false); return; }
+  const {error:insertErr}=await supabase.from("barang_dikirim").insert(items);
+  if(insertErr){ showToast("❌ 儲存失敗",false); return; }
 
-  const { error: delErr } = await supabase.from("gudang_penyimpanan").delete().eq("place", place);
-  if(delErr){ showToast("❌ 刪除原始資料失敗", false); return; }
+  const {error:delErr}=await supabase.from("gudang_penyimpanan").delete().eq("place",place);
+  if(delErr){ showToast("❌ 刪除原始資料失敗",false); return; }
 
-  document.getElementById("tableBody").innerHTML = `<tr><td colspan="7">✅ 全部出貨完成</td></tr>`;
-  showToast("✅ 所有商品已出貨並儲存", true);
+  document.getElementById("tableBody").innerHTML=`<tr><td colspan="7">✅ 全部出貨完成</td></tr>`;
+  showToast("✅ 已自動出貨 (無需輸入)",true);
 }
 
-function handleEnter(event){ if(event.key==="Enter"){ event.preventDefault(); filterByPlace(); } }
+function handleEnter(e){ if(e.key==="Enter"){ e.preventDefault(); filterByPlace(); } }
 </script>
 </body>
 </html>

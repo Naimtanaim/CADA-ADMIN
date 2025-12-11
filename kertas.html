@@ -8,34 +8,38 @@
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
 <style>
-  body { font-family: "Noto Sans TC", sans-serif; margin:0; background:#f6f7f9; padding:18px; }
-  .container { max-width:900px; margin:0 auto; }
-  .actions { display:flex; justify-content:flex-end; gap:10px; margin-bottom:12px; }
-  button { background:#0b6cff; color:white; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600; }
-  button.ghost { background:#fff; color:#0b6cff; border:1px solid #d4d9ef; }
-  .sheet { background:white; border-radius:6px; padding:18px; box-shadow:0 6px 18px rgba(10,12,30,0.06); }
-  .sheet-header { display:flex; justify-content:space-between; align-items:flex-start; }
-  .title-left { font-size:28px; font-weight:700; }
-  .meta { font-size:14px; color:#555; }
-  .barcode-top svg { width:320px; height:70px; }
-  table { width:100%; border-collapse:collapse; margin-top:16px; font-size:14px; }
-  th, td { border:1px solid #dfe3ee; padding:8px 10px; text-align:center; }
-  th { background:#f9fafc; font-weight:bold; }
-  .barcode-thumb svg { height:40px; width:180px; }
-  @media print { .actions { display:none; } body { background:white; } .sheet { box-shadow:none; border-radius:0; } }
-  .toast { visibility:hidden; min-width:200px; background-color:#333; color:#fff; text-align:center;
-           border-radius:8px; padding:12px; position:fixed; left:50%; bottom:30px; 
-           opacity:0; transform:translateX(-50%); transition:opacity .5s,bottom .5s; }
-  .toast.show { visibility:visible; opacity:1; bottom:50px; }
-  .toast.success { background-color:#28a745; }
-  .toast.error { background-color:#dc3545; }
+body { font-family: "Noto Sans TC", sans-serif; margin:0; background:#f6f7f9; padding:18px; }
+.container { max-width:900px; margin:0 auto; }
+.actions { display:flex; justify-content:flex-end; gap:10px; margin-bottom:12px; }
+button { background:#0b6cff; color:white; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600; }
+button.ghost { background:#fff; color:#0b6cff; border:1px solid #d4d9ef; }
+.sheet { background:white; border-radius:6px; padding:18px; box-shadow:0 6px 18px rgba(10,12,30,0.06); }
+.sheet-header { display:flex; justify-content:space-between; align-items:flex-start; }
+.title-left { font-size:28px; font-weight:700; }
+.meta { font-size:14px; color:#555; }
+.barcode-top svg { width:320px; height:70px; }
+table { width:100%; border-collapse:collapse; margin-top:16px; font-size:14px; }
+th, td { border:1px solid #dfe3ee; padding:8px 10px; text-align:center; }
+th { background:#f9fafc; font-weight:bold; }
+.barcode-thumb svg { height:40px; width:180px; }
+@media print { .actions { display:none; } body { background:white; } .sheet { box-shadow:none; border-radius:0; } }
+.toast { visibility:hidden; min-width:200px; background-color:#333; color:#fff; text-align:center;
+       border-radius:8px; padding:12px; position:fixed; left:50%; bottom:30px; 
+       opacity:0; transform:translateX(-50%); transition:opacity .5s,bottom .5s; }
+.toast.show { visibility:visible; opacity:1; bottom:50px; }
+.toast.success { background-color:#28a745; }
+.toast.error { background-color:#dc3545; }
 </style>
 </head>
 
 <body>
 <div class="container">
   <div class="actions">
-    <input id="placeInput" type="text" placeholder="輸入存放位置" autofocus onkeydown="handleEnter(event)">
+    <input id="placeInput" type="text" placeholder="輸入存放位置" autofocus
+       onkeydown="handleEnter(event)" 
+       oninput="this.value = this.value.toUpperCase()"
+       style="text-transform: uppercase;">
+
     <button onclick="filterByPlace()">查詢</button>
     <button class="ghost" onclick="refreshData()">刷新資料</button>
     <button onclick="shipAll()">🚚 全部出貨</button>
@@ -172,7 +176,7 @@ async function shipAll(){
     return;
   }
 
-  // langsung simpan tanpa input
+  // simpan otomatis ke barang_dikirim
   const items=data.map(d=>({
     barcode:d.barcode,
     box_number:d.box_number,
@@ -182,10 +186,10 @@ async function shipAll(){
     customer_order_number:d.customer_order_number,
     shipped_at:new Date().toISOString(),
 
-    preparation_number:d.preparation_number || "",
-    delivery_order_number:d.delivery_order_number || "",
-    packer:d.packer || "",
-    warehouse_location:d.place || ""
+    preparation_number: d.material_order_number || "",   // ambil dari kolom yang ada
+    delivery_order_number: d.delivery_order_number || "",
+    packer: d.packer || "",
+    warehouse_location: d.place || ""
   }));
 
   const {error:insertErr}=await supabase.from("barang_dikirim").insert(items);
@@ -195,7 +199,7 @@ async function shipAll(){
   if(delErr){ showToast("❌ 刪除原始資料失敗",false); return; }
 
   document.getElementById("tableBody").innerHTML=`<tr><td colspan="7">✅ 全部出貨完成</td></tr>`;
-  showToast("✅ 已自動出貨 (無需輸入)",true);
+  showToast("✅ 已自動出貨並儲存到歷史紀錄",true);
 }
 
 function handleEnter(e){ if(e.key==="Enter"){ e.preventDefault(); filterByPlace(); } }

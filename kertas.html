@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>出貨課 - 存放位置資料</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
@@ -23,12 +24,12 @@ th, td { border:1px solid #dfe3ee; padding:8px 10px; text-align:center; }
 th { background:#f9fafc; font-weight:bold; }
 .barcode-thumb svg { height:40px; width:180px; }
 @media print { .actions { display:none; } body { background:white; } .sheet { box-shadow:none; border-radius:0; } }
-.toast { visibility:hidden; min-width:200px; background-color:#333; color:#fff; text-align:center;
-       border-radius:8px; padding:12px; position:fixed; left:50%; bottom:30px; 
-       opacity:0; transform:translateX(-50%); transition:opacity .5s,bottom .5s; }
+.toast { visibility:hidden; min-width:200px; background:#333; color:#fff; text-align:center;
+border-radius:8px; padding:12px; position:fixed; left:50%; bottom:30px;
+opacity:0; transform:translateX(-50%); transition:.5s; }
 .toast.show { visibility:visible; opacity:1; bottom:50px; }
-.toast.success { background-color:#28a745; }
-.toast.error { background-color:#dc3545; }
+.toast.success { background:#28a745; }
+.toast.error { background:#dc3545; }
 </style>
 </head>
 
@@ -36,9 +37,8 @@ th { background:#f9fafc; font-weight:bold; }
 <div class="container">
   <div class="actions">
     <input id="placeInput" type="text" placeholder="輸入存放位置" autofocus
-       onkeydown="handleEnter(event)" 
-       oninput="this.value = this.value.toUpperCase()"
-       style="text-transform: uppercase;">
+      onkeydown="handleEnter(event)"
+      oninput="this.value=this.value.toUpperCase()">
 
     <button onclick="filterByPlace()">查詢</button>
     <button class="ghost" onclick="refreshData()">刷新資料</button>
@@ -50,25 +50,18 @@ th { background:#f9fafc; font-weight:bold; }
     <div class="sheet-header">
       <div>
         <div class="title-left">出貨課</div>
-        <div class="meta" style="margin-top:8px;">Print penyimpan 存放位置</div>
-        <div id="dateNow" class="meta" style="margin-top:6px;"></div>
-        <div id="placeLabel" style="margin-top:12px;font-weight:600;color:#111;"></div>
+        <div class="meta">Print penyimpan 存放位置</div>
+        <div id="dateNow" class="meta"></div>
+        <div id="placeLabel" style="margin-top:12px;font-weight:600;"></div>
       </div>
-      <div class="barcode-top">
-        <svg id="mainBarcode"></svg>
-      </div>
+      <div class="barcode-top"><svg id="mainBarcode"></svg></div>
     </div>
 
-    <table id="dataTable">
+    <table>
       <thead>
         <tr>
-          <th>No.</th>
-          <th>條碼</th>
-          <th>箱號</th>
-          <th>公司號</th>
-          <th>包裝數量</th>
-          <th>客戶</th>
-          <th>客戶訂單號</th>
+          <th>No</th><th>條碼</th><th>箱號</th><th>公司號</th>
+          <th>包裝數量</th><th>客戶</th><th>客戶訂單號</th>
         </tr>
       </thead>
       <tbody id="tableBody">
@@ -81,128 +74,103 @@ th { background:#f9fafc; font-weight:bold; }
 <div id="toast" class="toast"></div>
 
 <script>
+/* ================= SUPABASE ================= */
 const SUPABASE_URL = "https://uusljhegkvahcjkaxqkz.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* ================= INIT ================= */
 document.getElementById("dateNow").textContent =
-  "日期：" + new Date().toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"});
+  "日期：" + new Date().toLocaleDateString("zh-TW");
+
+/* ================= UTILS ================= */
+function handleEnter(e){
+  if(e.key==="Enter"){
+    e.preventDefault();
+    filterByPlace();
+  }
+}
+
+function toast(msg, ok=true){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.className=`toast show ${ok?'success':'error'}`;
+  setTimeout(()=>t.className="toast",2500);
+}
 
 function makeMainBarcode(text){
   const svg=document.getElementById("mainBarcode");
   svg.innerHTML="";
-  JsBarcode(svg,text||"出貨課",{format:"CODE128",displayValue:true,height:60,fontSize:14,margin:0});
+  JsBarcode(svg,text||"出貨課",{format:"CODE128",height:60,displayValue:true});
 }
 makeMainBarcode("出貨課");
 
-function showToast(msg, ok=true){
-  const t=document.getElementById("toast");
-  t.textContent=msg;
-  t.className=`toast show ${ok?'success':'error'}`;
-  setTimeout(()=>{ t.className='toast'; },2500);
-}
-
+/* ================= DATA ================= */
 async function refreshData(){
-  const {data,error}=await supabase.from("gudang_penyimpanan")
-                                   .select("*")
-                                   .order("id",{ascending:false})
-                                   .limit(10);
-  renderTable(data,error);
+  const {data,error}=await supabaseClient
+    .from("gudang_penyimpanan")
+    .select("*")
+    .order("id",{ascending:false})
+    .limit(10);
+  render(data,error);
 }
 
 async function filterByPlace(){
-  const place=document.getElementById("placeInput").value.trim();
-  const tbody=document.getElementById("tableBody");
-  const placeLabel=document.getElementById("placeLabel");
-  tbody.innerHTML=`<tr><td colspan="7">載入中...</td></tr>`;
-  placeLabel.textContent="";
+  const place=placeInput.value.trim();
+  if(!place){ toast("請輸入存放位置",false); return; }
 
-  if(!place){
-    tbody.innerHTML=`<tr><td colspan="7">⚠️ 請輸入存放位置</td></tr>`;
-    makeMainBarcode("出貨課");
-    return;
-  }
+  const {data,error}=await supabaseClient
+    .from("gudang_penyimpanan")
+    .select("*")
+    .eq("place",place)
+    .order("id",{ascending:false});
 
-  const {data,error}=await supabase.from("gudang_penyimpanan")
-                                   .select("*")
-                                   .eq("place",place)
-                                   .order("id",{ascending:false});
-
-  placeLabel.textContent="存放位置：" + place;
+  placeLabel.textContent="存放位置："+place;
   makeMainBarcode(place);
-  renderTable(data,error);
-
-  setTimeout(()=>{ document.getElementById("placeInput").value=""; },200);
+  render(data,error);
+  placeInput.value="";
 }
 
-function renderTable(data,error){
-  const tbody=document.getElementById("tableBody");
-  tbody.innerHTML="";
+function render(data,error){
+  const tb=document.getElementById("tableBody");
+  tb.innerHTML="";
+  if(error){ tb.innerHTML=`<tr><td colspan="7">${error.message}</td></tr>`; return; }
+  if(!data.length){ tb.innerHTML=`<tr><td colspan="7">沒有資料</td></tr>`; return; }
 
-  if(error){ tbody.innerHTML=`<tr><td colspan="7">❌ 錯誤: ${error.message}</td></tr>`; return; }
-  if(!data||data.length===0){ tbody.innerHTML=`<tr><td colspan="7">⚠️ 沒有找到資料</td></tr>`; return; }
-
-  data.forEach((row,i)=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${i+1}</td>
-      <td><div class="barcode-thumb"><svg id="bc-${row.id}"></svg></div><div style="font-size:12px;color:#555;">${row.barcode||""}</div></td>
-      <td>${row.box_number||""}</td>
-      <td>${row.company_number||""}</td>
-      <td>${row.packaging_quantity||""}</td>
-      <td>${row.customer||""}</td>
-      <td>${row.customer_order_number||""}</td>
-    `;
-    tbody.appendChild(tr);
-    JsBarcode(document.getElementById(`bc-${row.id}`), row.barcode||" ", {format:"CODE128",displayValue:false,height:40,margin:0});
+  data.forEach((r,i)=>{
+    tb.innerHTML+=`
+      <tr>
+        <td>${i+1}</td>
+        <td><svg id="bc${r.id}"></svg><div>${r.barcode||""}</div></td>
+        <td>${r.box_number||""}</td>
+        <td>${r.company_number||""}</td>
+        <td>${r.packaging_quantity||""}</td>
+        <td>${r.customer||""}</td>
+        <td>${r.customer_order_number||""}</td>
+      </tr>`;
+    JsBarcode(`#bc${r.id}`,r.barcode||"",{displayValue:false,height:40});
   });
 }
 
 async function shipAll(){
-  const placeText=document.getElementById("placeLabel").textContent;
-  const place=placeText.replace("存放位置：","");
+  const place=placeLabel.textContent.replace("存放位置：","");
+  if(!place){ toast("請先查詢",false); return; }
 
-  if(!place){
-    showToast("⚠️ 請先查詢存放位置",false);
-    return;
-  }
+  const {data}=await supabaseClient
+    .from("gudang_penyimpanan")
+    .select("*")
+    .eq("place",place);
 
-  const {data,error}=await supabase.from("gudang_penyimpanan")
-                                   .select("*")
-                                   .eq("place",place);
+  if(!data.length){ toast("沒有資料",false); return; }
 
-  if(error||!data||data.length===0){
-    showToast("⚠️ 沒有資料可出貨",false);
-    return;
-  }
+  await supabaseClient.from("barang_dikirim").insert(
+    data.map(d=>({...d,shipped_at:new Date()}))
+  );
 
-  // simpan otomatis ke barang_dikirim
-  const items=data.map(d=>({
-    barcode:d.barcode,
-    box_number:d.box_number,
-    company_number:d.company_number,
-    packaging_quantity:d.packaging_quantity,
-    customer:d.customer,
-    customer_order_number:d.customer_order_number,
-    shipped_at:new Date().toISOString(),
-
-    preparation_number: d.material_order_number || "",   // ambil dari kolom yang ada
-    delivery_order_number: d.delivery_order_number || "",
-    packer: d.packer || "",
-    warehouse_location: d.place || ""
-  }));
-
-  const {error:insertErr}=await supabase.from("barang_dikirim").insert(items);
-  if(insertErr){ showToast("❌ 儲存失敗",false); return; }
-
-  const {error:delErr}=await supabase.from("gudang_penyimpanan").delete().eq("place",place);
-  if(delErr){ showToast("❌ 刪除原始資料失敗",false); return; }
-
-  document.getElementById("tableBody").innerHTML=`<tr><td colspan="7">✅ 全部出貨完成</td></tr>`;
-  showToast("✅ 已自動出貨並儲存到歷史紀錄",true);
+  await supabaseClient.from("gudang_penyimpanan").delete().eq("place",place);
+  document.getElementById("tableBody").innerHTML=`<tr><td colspan="7">✅ 出貨完成</td></tr>`;
+  toast("出貨成功");
 }
-
-function handleEnter(e){ if(e.key==="Enter"){ e.preventDefault(); filterByPlace(); } }
 </script>
 </body>
 </html>

@@ -196,7 +196,7 @@ window.setWeight = async function () {
   palletWeight += addWeight; // total pallet weight global
 
   document.getElementById("result").innerText =
-    "当前桟板重量: " + palletWeight + " kg (ditambahkan)";
+    "当前桟板重量: " + palletWeight + " kg ()";
 
   const { data: rows, error } = await supabase
     .from("plt_table_duplicate")

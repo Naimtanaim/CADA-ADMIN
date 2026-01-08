@@ -82,15 +82,17 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const SUPABASE_URL = 'https://uusljhegkvahcjkaxqkz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g';
+const SUPABASE_KEY = 'YOUR_API_KEY';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const tbody = document.querySelector("#pltTable tbody");
 const weightWarning = document.getElementById("weightWarning");
-let initialData = [];
+
+// Snapshot awal dari plt_table (sebelum duplicate)
+let initialSnapshot = {};
 
 // ===============================
-// Load Data
+// Load Data Duplicate
 // ===============================
 async function loadData() {
   tbody.innerHTML = '';
@@ -120,22 +122,28 @@ document.getElementById("duplicateBtn").onclick = async function() {
   const startNo = parseInt(document.getElementById("startNo").value);
   const endNo = parseInt(document.getElementById("endNo").value);
   if(isNaN(startNo) || isNaN(endNo)){ alert("Isi nomor awal & akhir!"); return; }
+
   const { data } = await supabase.from('plt_table')
     .select('*')
     .gte('NO', startNo)
     .lte('NO', endNo)
     .order('NO', {ascending:true});
+
   if(!data.length){ alert("Data tidak ditemukan!"); return; }
-  // Pindah ke duplicate
+
+  // Simpan snapshot awal untuk kembaliin berat asli nanti
+  data.forEach(row => initialSnapshot[row.NO] = {...row});
+
   await supabase.from('plt_table_duplicate').insert(data);
   await supabase.from('plt_table').delete().gte('NO', startNo).lte('NO', endNo);
+
   document.getElementById("startNo").value='';
   document.getElementById("endNo").value='';
   loadData();
 };
 
 // ===============================
-// Set Weight Incremental
+// Set Weight Incremental (hanya di duplicate)
 // ===============================
 window.setWeight = async function(){
   const input = document.getElementById("palletWeight");
@@ -151,20 +159,21 @@ window.setWeight = async function(){
 };
 
 // ===============================
-// Delete Per Baris (Kembalikan ke plt_table)
+// Delete Per Baris (Kembalikan ke plt_table, berat asli)
 // ===============================
 function addDeleteEvents(){
   document.querySelectorAll(".delete-btn").forEach(btn=>{
     btn.onclick = async function(){
       const tr = this.closest("tr");
       const no = tr.cells[0].innerText;
-      const { data } = await supabase.from('plt_table_duplicate').select('*').eq('NO', no).single();
-      if(data){
-        await supabase.from('plt_table').insert([data]);
+      const originalData = initialSnapshot[no]; // ambil data awal
+
+      if(originalData){
+        await supabase.from('plt_table').insert([originalData]); // kembalikan dengan berat asli
         await supabase.from('plt_table_duplicate').delete().eq('NO', no);
         tr.remove();
         calculateTotals();
-        alert(`✔ Data PLT ${no} dikembalikan ke awal`);
+        alert(`✔ Data PLT ${no} dikembalikan ke awal (berat asli)`);
       }
     }
   });
@@ -175,14 +184,14 @@ function addDeleteEvents(){
 // ===============================
 document.querySelector('.btn-delete-all').addEventListener('click', async ()=>{
   if(!confirm("Yakin hapus semua duplicate & kembalikan ke awal?")) return;
-  const { data: rows } = await supabase.from('plt_table_duplicate').select('*');
+  const rows = Object.values(initialSnapshot); // pakai snapshot awal
   if(rows.length>0){
     await supabase.from('plt_table').insert(rows);
     await supabase.from('plt_table_duplicate').delete().neq('NO',0);
   }
   tbody.innerHTML='';
   calculateTotals();
-  alert("✔ Semua data dikembalikan ke awal!");
+  alert("✔ Semua data dikembalikan ke awal (berat asli)!");
 });
 
 // ===============================
@@ -201,6 +210,11 @@ function calculateTotals(){
   document.getElementById("totalWeight").innerText = totalWeight.toFixed(2);
   weightWarning.style.display = totalWeight>4000?"block":"none";
 }
+
+// Load awal
+loadData();
+</script>
+
 
 // Load awal
 loadData();

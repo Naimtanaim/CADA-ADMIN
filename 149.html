@@ -161,16 +161,32 @@ window.setWeight = async function(){
 // ===============================
 // Delete Per Baris (Kembalikan ke plt_table, berat asli)
 // ===============================
+// ===============================
+// Delete Per Baris (Kembalikan ke plt_table, berat asli)
+// ===============================
 function addDeleteEvents(){
   document.querySelectorAll(".delete-btn").forEach(btn=>{
     btn.onclick = async function(){
       const tr = this.closest("tr");
       const no = tr.cells[0].innerText;
-      const originalData = initialSnapshot[no]; // ambil data awal
 
-      if(originalData){
-        await supabase.from('plt_table').insert([originalData]); // kembalikan dengan berat asli
+      // Ambil data asli dari plt_table_duplicate sebelum ada tambahan berat
+      const { data } = await supabase
+        .from('plt_table_duplicate')
+        .select('*')
+        .eq('NO', no)
+        .single();
+
+      if(data){
+        // Hapus property berat yang sudah ditambahkan
+        const originalData = {...data, 重量: parseFloat(data.重量_original ?? data.重量)};
+
+        // Insert kembali ke plt_table
+        await supabase.from('plt_table').insert([originalData]);
+
+        // Hapus dari duplicate
         await supabase.from('plt_table_duplicate').delete().eq('NO', no);
+
         tr.remove();
         calculateTotals();
         alert(`✔ Data PLT ${no} dikembalikan ke awal (berat asli)`);
@@ -178,6 +194,7 @@ function addDeleteEvents(){
     }
   });
 }
+
 
 // ===============================
 // Delete Semua Duplicate

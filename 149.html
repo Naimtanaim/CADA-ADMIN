@@ -82,11 +82,13 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 const SUPABASE_URL = 'https://uusljhegkvahcjkaxqkz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g';
+const SUPABASE_KEY = 'YOUR_API_KEY';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const tbody = document.querySelector("#pltTable tbody");
 const weightWarning = document.getElementById("weightWarning");
+
+// Snapshot awal dari plt_table (sebelum duplicate)
 let initialSnapshot = {};
 
 // ===============================
@@ -96,7 +98,6 @@ async function loadData() {
   tbody.innerHTML = '';
   const { data } = await supabase.from('plt_table_duplicate').select('*').order('NO', {ascending:true});
   data.forEach(row => {
-    const totalWeight = (parseFloat(row.重量 || 0) + parseFloat(row.pallet_weight || 0)).toFixed(2);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${row.NO}</td>
@@ -105,7 +106,7 @@ async function loadData() {
       <td>${row.材積 ?? 0}</td>
       <td>${row.CBM ?? 0}</td>
       <td>${row.箱數 ?? 0}</td>
-      <td>${totalWeight}</td>
+      <td>${row.重量 ?? 0}</td>
       <td><button class="delete-btn">Hapus 删除</button></td>
     `;
     tbody.appendChild(tr);
@@ -130,7 +131,7 @@ document.getElementById("duplicateBtn").onclick = async function() {
 
   if(!data.length){ alert("Data tidak ditemukan!"); return; }
 
-  // Simpan snapshot awal
+  // Simpan snapshot awal untuk kembaliin berat asli nanti
   data.forEach(row => initialSnapshot[row.NO] = {...row});
 
   await supabase.from('plt_table_duplicate').insert(data);
@@ -142,39 +143,33 @@ document.getElementById("duplicateBtn").onclick = async function() {
 };
 
 // ===============================
-// Set Weight Incremental
+// Set Weight Incremental (hanya di duplicate)
 // ===============================
 window.setWeight = async function(){
   const input = document.getElementById("palletWeight");
-  if(input.value === '' || isNaN(input.value)){
-    alert("Berat kosong!");
-    return;
-  }
+  if(input.value==='' || isNaN(input.value)){ alert("Berat kosong!"); return; }
   const addWeight = parseFloat(input.value);
-  const { data: rows } = await supabase.from('plt_table_duplicate').select('NO,pallet_weight');
-
+  const { data: rows } = await supabase.from('plt_table_duplicate').select('NO,重量');
   for(const row of rows){
-    const currentPallet = parseFloat(row.pallet_weight || 0);
-    const newPallet = parseFloat((currentPallet + addWeight).toFixed(2));
-    await supabase.from('plt_table_duplicate').update({ pallet_weight: newPallet }).eq('NO', row.NO);
+    const newWeight = parseFloat(((parseFloat(row.重量)||0)+addWeight).toFixed(2));
+    await supabase.from('plt_table_duplicate').update({重量:newWeight}).eq('NO', row.NO);
   }
-
   input.value='';
   loadData();
 };
 
 // ===============================
-// Delete Per Baris
+// Delete Per Baris (Kembalikan ke plt_table, berat asli)
 // ===============================
 function addDeleteEvents(){
   document.querySelectorAll(".delete-btn").forEach(btn=>{
     btn.onclick = async function(){
       const tr = this.closest("tr");
       const no = tr.cells[0].innerText;
-      const originalData = initialSnapshot[no]; // ambil snapshot
+      const originalData = initialSnapshot[no]; // ambil data awal
 
       if(originalData){
-        await supabase.from('plt_table').insert([originalData]); // kembalikan berat asli
+        await supabase.from('plt_table').insert([originalData]); // kembalikan dengan berat asli
         await supabase.from('plt_table_duplicate').delete().eq('NO', no);
         tr.remove();
         calculateTotals();
@@ -189,7 +184,7 @@ function addDeleteEvents(){
 // ===============================
 document.querySelector('.btn-delete-all').addEventListener('click', async ()=>{
   if(!confirm("Yakin hapus semua duplicate & kembalikan ke awal?")) return;
-  const rows = Object.values(initialSnapshot);
+  const rows = Object.values(initialSnapshot); // pakai snapshot awal
   if(rows.length>0){
     await supabase.from('plt_table').insert(rows);
     await supabase.from('plt_table_duplicate').delete().neq('NO',0);
@@ -219,5 +214,6 @@ function calculateTotals(){
 // Load awal
 loadData();
 </script>
+
 </body>
 </html>

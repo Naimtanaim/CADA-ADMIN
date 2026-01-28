@@ -57,7 +57,7 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
   height: 140mm;
   max-width: 100%;
   background: url("bg.jpg") no-repeat;
-  background-size: 210mm 140mm;
+  background-size: 210mm 250mm;
   box-shadow: 0 0 5px rgba(0,0,0,0.3);
 }
 
@@ -97,9 +97,9 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 
   <div class="form-row">
     <label>日期:</label>
-    <input type="text" id="year" placeholder="年" value="2024"> 年
-    <input type="text" id="month" placeholder="月" value="4"> 月
-    <input type="text" id="day" placeholder="日" value="22"> 日
+    <input type="text" id="year" placeholder="" value=""> 年
+    <input type="text" id="month" placeholder="" value=""> 月
+    <input type="text" id="day" placeholder="" value=""> 日
   </div>
 
   <div class="form-row">
@@ -166,7 +166,8 @@ function updatePaper() {
   const y = document.getElementById('year').value;
   const m = document.getElementById('month').value;
   const d = document.getElementById('day').value;
-  document.getElementById('f_date').innerText = `${y} 年 ${m} 月 ${d} 日`;
+  document.getElementById('f_date').innerHTML = `${y}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${m}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${d}`;
+
 
   document.getElementById('f_customer').innerText = document.getElementById('customer').value;
 

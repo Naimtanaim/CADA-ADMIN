@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>託運簽單</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: "PMingLiU","MingLiU","Microsoft JhengHei",serif;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+form {
+  width: 30%;
+  padding: 20px;
+  background: #f5f5f5;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+form h3 { margin-top: 0; }
+form .buttons { margin-bottom: 10px; }
+form button, form input[type="color"] {
+  margin-right: 10px;
+  padding: 6px 12px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.form-row label { white-space: nowrap; }
+form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px; }
+
+.preview-container {
+  width: 70%;
+  padding: 20px;
+  overflow: auto;
+  background: #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.paper {
+  position: relative;
+  width: 210mm;
+  height: 140mm;
+  max-width: 100%;
+  background: url("bg.jpg") no-repeat;
+  background-size: 210mm 140mm;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+.field { position: absolute; font-size: 14px; white-space: nowrap; }
+.date    { top: 18mm; left: 155mm; }
+.customer { top: 32mm; left: 25mm; }
+.start_end { top: 48mm; left: 25mm; }
+.delivery { top: 58mm; left: 25mm; }
+.qty   { top: 118mm; left: 45mm; }
+.board { top: 118mm; left: 75mm; }
+.weight{ top: 118mm; left: 105mm; }
+.cbm   { top: 118mm; left: 145mm; }
+.basic { top: 140mm; left: 55mm; }
+.extra { top: 140mm; left: 105mm; }
+.total { top: 152mm; left: 55mm; font-weight: bold; }
+
+@media print {
+  body { display: block; }
+  form { display: none; }
+  .preview-container { width: 100%; padding: 0; background: none; }
+  .paper { box-shadow: none; max-width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<form id="form">
+  <h3>Isi Data 託運簽單</h3>
+
+  <div class="buttons">
+    <button type="button" onclick="updatePaper()">更新單據</button>
+    <button type="button" onclick="window.print()">列印單據</button>
+    <label for="textColor">選擇文字顏色:</label>
+    <input type="color" id="textColor" value="#000000">
+  </div>
+
+  <div class="form-row">
+    <label>日期:</label>
+    <input type="text" id="year" placeholder="年" value="2024"> 年
+    <input type="text" id="month" placeholder="月" value="4"> 月
+    <input type="text" id="day" placeholder="日" value="22"> 日
+  </div>
+
+  <div class="form-row">
+    <label>顧客名稱:</label>
+    <input type="text" id="customer" placeholder="" value="">
+  </div>
+
+  <!-- 配送內容 -->
+  <div class="form-row">
+    <label>配送內容:</label>
+    <input type="text" id="delivery1" placeholder="" value="">
+  </div>
+  <div class="form-row"><input type="text" id="delivery2" placeholder="" value=""></div>
+  <div class="form-row"><input type="text" id="delivery3" placeholder="" value=""></div>
+  <div class="form-row"><input type="text" id="delivery4" placeholder="" value=""></div>
+
+  <!-- Paket info -->
+  <div class="form-row">
+    <label>件數:</label>
+    <input type="text" id="qty" value="">
+    <label>板數:</label>
+    <input type="text" id="board" value="">
+  </div>
+  <div class="form-row">
+    <label>重量:</label>
+    <input type="text" id="weight" value="">
+    <label>立方數:</label>
+    <input type="text" id="cbm" value="">
+  </div>
+
+  <!-- Biaya -->
+  <div class="form-row">
+    <label>基本費用:</label>
+    <input type="text" id="basic" value="">
+    <label>額外費用:</label>
+    <input type="text" id="extra" value="">
+    <label>總計:</label>
+    <input type="text" id="total" value="">
+  </div>
+</form>
+
+<div class="preview-container">
+  <div class="paper" id="paper">
+    <div class="field date" id="f_date">2024 年 4 月 22 日</div>
+    <div class="field customer" id="f_customer"></div>
+    <div class="field start_end" id="f_start_end"></div>
+    <div class="field delivery" id="f_delivery"></div>
+    <div class="field qty" id="f_qty"></div>
+    <div class="field board" id="f_board"></div>
+    <div class="field weight" id="f_weight"></div>
+    <div class="field cbm" id="f_cbm"></div>
+    <div class="field basic" id="f_basic"></div>
+    <div class="field extra" id="f_extra"></div>
+    <div class="field total" id="f_total"></div>
+  </div>
+</div>
+
+<script>
+// Fungsi helper konversi string ke number
+function num(val) { return parseFloat(val)||0; }
+
+// Update preview
+function updatePaper() {
+  const y = document.getElementById('year').value;
+  const m = document.getElementById('month').value;
+  const d = document.getElementById('day').value;
+  document.getElementById('f_date').innerText = `${y} 年 ${m} 月 ${d} 日`;
+
+  document.getElementById('f_customer').innerText = document.getElementById('customer').value;
+
+  const deliveries = [
+    document.getElementById('delivery1').value,
+    document.getElementById('delivery2').value,
+    document.getElementById('delivery3').value,
+    document.getElementById('delivery4').value
+  ];
+  document.getElementById('f_delivery').innerHTML = deliveries.filter(d => d).join("<br>");
+
+  document.getElementById('f_qty').innerText = document.getElementById('qty').value;
+  document.getElementById('f_board').innerText = document.getElementById('board').value;
+  document.getElementById('f_weight').innerText = document.getElementById('weight').value;
+  document.getElementById('f_cbm').innerText = document.getElementById('cbm').value;
+
+  document.getElementById('f_basic').innerText = document.getElementById('basic').value;
+  document.getElementById('f_extra').innerText = document.getElementById('extra').value;
+  document.getElementById('f_total').innerText = document.getElementById('total').value;
+
+  const color = document.getElementById('textColor').value;
+  document.querySelectorAll('.paper .field').forEach(f => f.style.color = color);
+}
+
+// Ambil data dari printer.html via localStorage
+window.addEventListener('DOMContentLoaded', () => {
+  const data = JSON.parse(localStorage.getItem('printerTotals'));
+  if(data){
+    document.getElementById('qty').value = data.totalBoxes || '';
+    document.getElementById('board').value = data.totalBoards || '';
+    document.getElementById('weight').value = data.totalWeight || '';
+    document.getElementById('cbm').value = data.totalCubic || '';
+  }
+  updatePaper();
+});
+
+// Event listener input & color picker
+document.querySelectorAll('#form input').forEach(el => el.addEventListener('input', updatePaper));
+document.getElementById('textColor').addEventListener('input', updatePaper);
+</script>
+
+</body>
+</html>

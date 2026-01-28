@@ -81,6 +81,9 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
   .paper { box-shadow: none; max-width: 100%; }
 }
 </style>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -134,16 +137,16 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
   <div class="form-row">
     <label>基本運費:</label>
     <input type="text" id="basic" value="">
-     <label>總計:</label>
+    <label>總計:</label>
     <input type="text" id="total" value="">
-     <label>額外費用:</label>
+    <label>額外費用:</label>
     <input type="text" id="extra" value="">
   </div>
 </form>
 
 <div class="preview-container">
   <div class="paper" id="paper">
-    <div class="field date" id="f_date">2024 年 4 月 22 日</div>
+    <div class="field date" id="f_date"></div>
     <div class="field customer" id="f_customer"></div>
     <div class="field start_end" id="f_start_end"></div>
     <div class="field delivery" id="f_delivery"></div>
@@ -158,52 +161,72 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 </div>
 
 <script>
-// Fungsi helper konversi string ke number
-function num(val) { return parseFloat(val)||0; }
+// 1️⃣ Supabase client (hindari redeclare)
+const supabaseClient = supabase.createClient(
+  'https://uusljhegkvahcjkaxqkz.supabase.co', // Ganti URL kamu
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g'                   // Ganti API Key anon
+);
 
-// Update preview
+// 2️⃣ Helper
+function num(val) { return parseFloat(val) || 0; }
+
+// 3️⃣ Update preview
 function updatePaper() {
-  const y = document.getElementById('year').value;
-  const m = document.getElementById('month').value;
-  const d = document.getElementById('day').value;
-  document.getElementById('f_date').innerHTML = `${y}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${m}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${d}`;
+  f_date.innerHTML = `${year.value}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${month.value}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${day.value}`;
+  f_customer.innerText = customer.value;
 
+  const deliveries = [delivery1.value, delivery2.value, delivery3.value, delivery4.value];
+  f_delivery.innerHTML = deliveries.filter(v => v).join('<br>');
 
-  document.getElementById('f_customer').innerText = document.getElementById('customer').value;
+  f_board.innerText  = board.value;
+  f_qty.innerText    = qty.value;
+  f_weight.innerText = weight.value;
+  f_cbm.innerText    = cbm.value;
+  f_basic.innerText  = basic.value;
+  f_total.innerText  = total.value;
+  f_extra.innerText  = extra.value;
 
-  const deliveries = [
-    document.getElementById('delivery1').value,
-    document.getElementById('delivery2').value,
-    document.getElementById('delivery3').value,
-    document.getElementById('delivery4').value
-  ];
-  document.getElementById('f_board').innerText = document.getElementById('board').value;
-  document.getElementById('f_delivery').innerHTML = deliveries.filter(d => d).join("<br>");
-  document.getElementById('f_qty').innerText = document.getElementById('qty').value;
-  document.getElementById('f_weight').innerText = document.getElementById('weight').value;
-  document.getElementById('f_cbm').innerText = document.getElementById('cbm').value;
-  document.getElementById('f_basic').innerText = document.getElementById('basic').value;
-  document.getElementById('f_total').innerText = document.getElementById('total').value;
-  document.getElementById('f_extra').innerText = document.getElementById('extra').value;
-  const color = document.getElementById('textColor').value;
+  const color = textColor.value;
   document.querySelectorAll('.paper .field').forEach(f => f.style.color = color);
 }
 
-// Ambil data dari printer.html via localStorage
-window.addEventListener('DOMContentLoaded', () => {
-  const data = JSON.parse(localStorage.getItem('printerTotals'));
-  if(data){
-    document.getElementById('board').value = data.totalBoards || '';
-    document.getElementById('qty').value = data.totalBoxes || '';
-    document.getElementById('weight').value = data.totalWeight || '';
-    document.getElementById('cbm').value = data.totalCubic || '';
-  }
-  updatePaper();
-});
+// 4️⃣ Load data dari Supabase dan bulatkan ke atas
+async function loadTotalsFromSupabase() {
+  const { data, error } = await supabaseClient
+    .from('plt_table_duplicate_total')
+    .select('*')
+    .single();
 
-// Event listener input & color picker
-document.querySelectorAll('#form input').forEach(el => el.addEventListener('input', updatePaper));
-document.getElementById('textColor').addEventListener('input', updatePaper);
+  if (error) { 
+    console.error('Supabase error:', error); 
+    return; 
+  }
+
+  // Bulatkan ke atas tanpa titik
+  board.value  = Math.ceil(parseFloat(data.total_box)  || 0);
+  qty.value    = Math.ceil(parseFloat(data.total_no)   || 0);
+  weight.value = Math.ceil(parseFloat(data.total_weight) || 0);
+  cbm.value    = Math.ceil(parseFloat(data.total_cbm)    || 0);
+
+  updatePaper();
+}
+
+
+// 5️⃣ Hitung total biaya
+function calcTotal() {
+  total.value = (num(basic.value) + num(extra.value)).toFixed(0);
+  updatePaper();
+}
+
+// 6️⃣ Event DOMContentLoaded
+window.addEventListener('DOMContentLoaded', () => {
+  loadTotalsFromSupabase();
+
+  document.querySelectorAll('#form input').forEach(el => el.addEventListener('input', updatePaper));
+  basic.addEventListener('input', calcTotal);
+  extra.addEventListener('input', calcTotal);
+  textColor.addEventListener('input', updatePaper);
+});
 </script>
 
 </body>

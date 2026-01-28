@@ -62,7 +62,7 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 }
 
 .field { position: absolute; font-size: 14px; white-space: nowrap; }
-.date    { top: 18mm; left: 155mm; }
+.date    { top: 18mm; left: 120mm; }
 .customer { top: 32mm; left: 25mm; }
 .start_end { top: 48mm; left: 25mm; }
 .delivery { top: 58mm; left: 25mm; }
@@ -118,26 +118,26 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 
   <!-- Paket info -->
   <div class="form-row">
-    <label>件數:</label>
-    <input type="text" id="qty" value="">
     <label>板數:</label>
+    <input type="text" id="qty" value="">
+    <label>件數:</label>
     <input type="text" id="board" value="">
   </div>
   <div class="form-row">
     <label>重量:</label>
     <input type="text" id="weight" value="">
-    <label>立方數:</label>
+    <label>才數:</label>
     <input type="text" id="cbm" value="">
   </div>
 
   <!-- Biaya -->
   <div class="form-row">
-    <label>基本費用:</label>
+    <label>基本運費:</label>
     <input type="text" id="basic" value="">
-    <label>額外費用:</label>
-    <input type="text" id="extra" value="">
-    <label>總計:</label>
+     <label>總計:</label>
     <input type="text" id="total" value="">
+     <label>額外費用:</label>
+    <input type="text" id="extra" value="">
   </div>
 </form>
 
@@ -147,13 +147,13 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
     <div class="field customer" id="f_customer"></div>
     <div class="field start_end" id="f_start_end"></div>
     <div class="field delivery" id="f_delivery"></div>
-    <div class="field qty" id="f_qty"></div>
     <div class="field board" id="f_board"></div>
+    <div class="field qty" id="f_qty"></div>
     <div class="field weight" id="f_weight"></div>
     <div class="field cbm" id="f_cbm"></div>
     <div class="field basic" id="f_basic"></div>
-    <div class="field extra" id="f_extra"></div>
     <div class="field total" id="f_total"></div>
+    <div class="field extra" id="f_extra"></div>
   </div>
 </div>
 
@@ -176,17 +176,14 @@ function updatePaper() {
     document.getElementById('delivery3').value,
     document.getElementById('delivery4').value
   ];
-  document.getElementById('f_delivery').innerHTML = deliveries.filter(d => d).join("<br>");
-
-  document.getElementById('f_qty').innerText = document.getElementById('qty').value;
   document.getElementById('f_board').innerText = document.getElementById('board').value;
+  document.getElementById('f_delivery').innerHTML = deliveries.filter(d => d).join("<br>");
+  document.getElementById('f_qty').innerText = document.getElementById('qty').value;
   document.getElementById('f_weight').innerText = document.getElementById('weight').value;
   document.getElementById('f_cbm').innerText = document.getElementById('cbm').value;
-
   document.getElementById('f_basic').innerText = document.getElementById('basic').value;
-  document.getElementById('f_extra').innerText = document.getElementById('extra').value;
   document.getElementById('f_total').innerText = document.getElementById('total').value;
-
+  document.getElementById('f_extra').innerText = document.getElementById('extra').value;
   const color = document.getElementById('textColor').value;
   document.querySelectorAll('.paper .field').forEach(f => f.style.color = color);
 }
@@ -195,8 +192,8 @@ function updatePaper() {
 window.addEventListener('DOMContentLoaded', () => {
   const data = JSON.parse(localStorage.getItem('printerTotals'));
   if(data){
-    document.getElementById('qty').value = data.totalBoxes || '';
     document.getElementById('board').value = data.totalBoards || '';
+    document.getElementById('qty').value = data.totalBoxes || '';
     document.getElementById('weight').value = data.totalWeight || '';
     document.getElementById('cbm').value = data.totalCubic || '';
   }

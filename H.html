@@ -170,16 +170,14 @@ const supabaseClient = supabase.createClient(
 // 2️⃣ Helper
 function num(val) { return parseFloat(val) || 0; }
 
-/* ===============================
-   UPDATE PREVIEW
-================================ */
 function updatePaper() {
   const y = year.value;
   const m = month.value;
   const d = day.value;
 
-  f_date.innerHTML =
-    `${y}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${m}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${d}`;
+  // 全形空白 = \u3000 (lebar sama dengan huruf China)
+  f_date.innerText = `${y}\u3000\u3000${m}\u3000\u3000${d}`;
+
   f_customer.innerText = customer.value;
 
   const deliveries = [delivery1.value, delivery2.value, delivery3.value, delivery4.value];
@@ -196,6 +194,7 @@ function updatePaper() {
   const color = textColor.value;
   document.querySelectorAll('.paper .field').forEach(f => f.style.color = color);
 }
+
 
 // 4️⃣ Load data dari Supabase dan bulatkan ke atas
 async function loadTotalsFromSupabase() {

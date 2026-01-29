@@ -115,9 +115,10 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 
 /* tiap baris delivery */
 .delivery-line {
-  margin-bottom: 6px;  /* JARAK ANTAR BARIS */
   line-height: 1.6;
+  min-height: 1.2em; /* pastikan setiap baris tetap tinggi */
 }
+
 
 @media print {
   body { display: block; }
@@ -282,13 +283,18 @@ const deliveryInputs = [
 const f_delivery = document.getElementById('f_delivery');
 
 function updateDeliveryPreview() {
-  // Tampilkan semua 4 input sesuai urutan, walau kosong
-  const lines = deliveryInputs.map(i => i.value);
-
-  f_delivery.innerHTML = lines
-    .map(text => `<div class="delivery-line">${text}</div>`)
-    .join('');
+  deliveryInputs.forEach((input, index) => {
+    const text = input.value.trim() || "\u00A0"; // non-breaking space kalau kosong
+    let line = f_delivery.children[index];
+    if (!line) {
+      line = document.createElement("div");
+      line.className = "delivery-line";
+      f_delivery.appendChild(line);
+    }
+    line.innerHTML = text;
+  });
 }
+
 
 // realtime saat diketik
 deliveryInputs.forEach(i => {

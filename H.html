@@ -242,7 +242,7 @@ function updatePaper() {
   const color = textColor.value;
   document.querySelectorAll('.paper .field').forEach(f => f.style.color = color);
 
-  updateDeliveryPreview(); // ⬅️ TAMBAH
+  updateDeliveryPreview(); // tetap di sini
 }
 
 // 4️⃣ Load data dari Supabase dan bulatkan ke atas
@@ -282,13 +282,13 @@ const deliveryInputs = [
 const f_delivery = document.getElementById('f_delivery');
 
 function updateDeliveryPreview() {
-  const lines = deliveryInputs.map(i => i.value); // tidak filter
+  // Tampilkan semua 4 input sesuai urutan, walau kosong
+  const lines = deliveryInputs.map(i => i.value);
 
   f_delivery.innerHTML = lines
     .map(text => `<div class="delivery-line">${text}</div>`)
     .join('');
 }
-
 
 // realtime saat diketik
 deliveryInputs.forEach(i => {

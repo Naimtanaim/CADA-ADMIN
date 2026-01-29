@@ -73,7 +73,6 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 .extra { top: 100mm; left: 68mm; font-weight: bold; }
 .total { top: 110mm; left: 30mm; font-weight: bold; }
 
-
 /* style umum (opsional) */
 .delivery {
   width: 100%;
@@ -104,6 +103,20 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 .d4 {
   margin-top: 14px;
   font-weight: bold;
+}
+
+/* PREVIEW delivery di kertas */
+.field.delivery {
+  top: 50mm;          /* ATUR POSISI DI KERTAS */
+  left: 30mm;
+  width: 140mm;
+  white-space: normal; /* BIAR BISA MULTI BARIS */
+}
+
+/* tiap baris delivery */
+.delivery-line {
+  margin-bottom: 6px;  /* JARAK ANTAR BARIS */
+  line-height: 1.6;
 }
 
 @media print {
@@ -142,24 +155,23 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
     <input type="text" id="customer" placeholder="" value="">
   </div>
 
-<!-- 配送內容 -->
-<div class="form-row">
-  <label>配送內容:</label>
-  <input type="text" id="delivery1" class="delivery d1">
-</div>
+  <!-- 配送內容 -->
+  <div class="form-row">
+    <label>配送內容:</label>
+    <input type="text" id="delivery1" class="delivery d1">
+  </div>
 
-<div class="form-row">
-  <input type="text" id="delivery2" class="delivery d2">
-</div>
+  <div class="form-row">
+    <input type="text" id="delivery2" class="delivery d2">
+  </div>
 
-<div class="form-row">
-  <input type="text" id="delivery3" class="delivery d3">
-</div>
+  <div class="form-row">
+    <input type="text" id="delivery3" class="delivery d3">
+  </div>
 
-<div class="form-row">
-  <input type="text" id="delivery4" class="delivery d4">
-</div>
-
+  <div class="form-row">
+    <input type="text" id="delivery4" class="delivery d4">
+  </div>
 
   <!-- Paket info -->
   <div class="form-row">
@@ -203,10 +215,10 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 </div>
 
 <script>
-// 1️⃣ Supabase client (hindari redeclare)
+// 1️⃣ Supabase client
 const supabaseClient = supabase.createClient(
-  'https://uusljhegkvahcjkaxqkz.supabase.co', // Ganti URL kamu
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g'                   // Ganti API Key anon
+  'https://uusljhegkvahcjkaxqkz.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g'
 );
 
 // 2️⃣ Helper
@@ -217,9 +229,7 @@ function updatePaper() {
   const m = month.value;
   const d = day.value;
 
-  // 全形空白 = \u3000 (lebar sama dengan huruf China)
   f_date.innerText = `${y}\u3000\u3000\u3000${m}\u3000\u3000\u3000${d}`;
-
   f_customer.innerText = customer.value;
   f_board.innerText  = board.value;
   f_qty.innerText    = qty.value;
@@ -231,8 +241,9 @@ function updatePaper() {
 
   const color = textColor.value;
   document.querySelectorAll('.paper .field').forEach(f => f.style.color = color);
-}
 
+  updateDeliveryPreview(); // ⬅️ TAMBAH
+}
 
 // 4️⃣ Load data dari Supabase dan bulatkan ke atas
 async function loadTotalsFromSupabase() {
@@ -246,7 +257,6 @@ async function loadTotalsFromSupabase() {
     return; 
   }
 
-  // Bulatkan ke atas tanpa titik
   board.value  = Math.ceil(parseFloat(data.total_box)  || 0);
   qty.value    = Math.ceil(parseFloat(data.total_no)   || 0);
   weight.value = Math.ceil(parseFloat(data.total_weight) || 0);
@@ -255,12 +265,36 @@ async function loadTotalsFromSupabase() {
   updatePaper();
 }
 
-
 // 5️⃣ Hitung total biaya
 function calcTotal() {
   total.value = (num(basic.value) + num(extra.value)).toFixed(0);
   updatePaper();
 }
+
+// ===== DELIVERY LIVE PREVIEW =====
+const deliveryInputs = [
+  document.getElementById('delivery1'),
+  document.getElementById('delivery2'),
+  document.getElementById('delivery3'),
+  document.getElementById('delivery4')
+];
+
+const f_delivery = document.getElementById('f_delivery');
+
+function updateDeliveryPreview() {
+  const lines = deliveryInputs
+    .map(i => i.value.trim())
+    .filter(v => v !== '');
+
+  f_delivery.innerHTML = lines
+    .map(text => `<div class="delivery-line">${text}</div>`)
+    .join('');
+}
+
+// realtime saat diketik
+deliveryInputs.forEach(i => {
+  i.addEventListener('input', updateDeliveryPreview);
+});
 
 // 6️⃣ Event DOMContentLoaded
 window.addEventListener('DOMContentLoaded', () => {

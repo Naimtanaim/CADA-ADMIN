@@ -82,13 +82,28 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 }
 
 /* delivery 1 */
-.d1 { margin-top: 0; letter-spacing: 1px; }
+.d1 {
+  margin-top: 0;
+  letter-spacing: 1px;
+}
+
 /* delivery 2 */
-.d2 { margin-top: 6px; font-size: 13px; }
+.d2 {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
 /* delivery 3 */
-.d3 { margin-top: 10px; line-height: 1.8; }
+.d3 {
+  margin-top: 10px;
+  line-height: 1.8;
+}
+
 /* delivery 4 */
-.d4 { margin-top: 14px; font-weight: bold; }
+.d4 {
+  margin-top: 14px;
+  font-weight: bold;
+}
 
 /* PREVIEW delivery di kertas */
 .field.delivery {
@@ -100,8 +115,8 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 
 /* tiap baris delivery */
 .delivery-line {
+  margin-bottom: 6px;  /* JARAK ANTAR BARIS */
   line-height: 1.6;
-  min-height: 1.2em; /* pastikan setiap baris tetap tinggi */
 }
 
 @media print {
@@ -145,12 +160,15 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
     <label>配送內容:</label>
     <input type="text" id="delivery1" class="delivery d1">
   </div>
+
   <div class="form-row">
     <input type="text" id="delivery2" class="delivery d2">
   </div>
+
   <div class="form-row">
     <input type="text" id="delivery3" class="delivery d3">
   </div>
+
   <div class="form-row">
     <input type="text" id="delivery4" class="delivery d4">
   </div>
@@ -224,7 +242,7 @@ function updatePaper() {
   const color = textColor.value;
   document.querySelectorAll('.paper .field').forEach(f => f.style.color = color);
 
-  updateDeliveryPreview();
+  updateDeliveryPreview(); // tetap di sini
 }
 
 // 4️⃣ Load data dari Supabase dan bulatkan ke atas
@@ -263,29 +281,22 @@ const deliveryInputs = [
 
 const f_delivery = document.getElementById('f_delivery');
 
-function initDeliveryPreview() {
-  // buat 4 div kosong di f_delivery
-  for (let i = 0; i < 4; i++) {
-    const line = document.createElement("div");
-    line.className = "delivery-line";
-    line.innerHTML = "\u00A0"; // spasi non-breaking
-    f_delivery.appendChild(line);
-  }
-}
-
 function updateDeliveryPreview() {
-  deliveryInputs.forEach((input, index) => {
-    const text = input.value.trim() || "\u00A0";
-    f_delivery.children[index].innerHTML = text;
-  });
+  // Tampilkan semua 4 input sesuai urutan, walau kosong
+  const lines = deliveryInputs.map(i => i.value);
+
+  f_delivery.innerHTML = lines
+    .map(text => `<div class="delivery-line">${text}</div>`)
+    .join('');
 }
 
 // realtime saat diketik
-deliveryInputs.forEach(i => i.addEventListener('input', updateDeliveryPreview));
+deliveryInputs.forEach(i => {
+  i.addEventListener('input', updateDeliveryPreview);
+});
 
 // 6️⃣ Event DOMContentLoaded
 window.addEventListener('DOMContentLoaded', () => {
-  initDeliveryPreview(); // ✅ pastikan 4 baris ada
   loadTotalsFromSupabase();
 
   document.querySelectorAll('#form input').forEach(el => el.addEventListener('input', updatePaper));

@@ -170,9 +170,16 @@ const supabaseClient = supabase.createClient(
 // 2️⃣ Helper
 function num(val) { return parseFloat(val) || 0; }
 
-// 3️⃣ Update preview
+/* ===============================
+   UPDATE PREVIEW
+================================ */
 function updatePaper() {
-  f_date.innerHTML = `${year.value}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${month.value}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${day.value}`;
+  const y = year.value;
+  const m = month.value;
+  const d = day.value;
+
+  f_date.innerHTML =
+    `${y}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${m}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${d}`;
   f_customer.innerText = customer.value;
 
   const deliveries = [delivery1.value, delivery2.value, delivery3.value, delivery4.value];

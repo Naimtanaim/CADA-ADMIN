@@ -217,13 +217,14 @@ const deliveries = [
 f_delivery.innerHTML = ""; // reset dulu
 
 deliveries.forEach((val, index) => {
-  if (val) {
+  if (val.trim() !== "") {
     const div = document.createElement("div");
     div.className = `delivery-item item-${index + 1}`;
     div.textContent = val;
     f_delivery.appendChild(div);
   }
 });
+
 
 
 

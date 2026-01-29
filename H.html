@@ -75,6 +75,27 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 .total { top: 110mm; left: 30mm; font-weight: bold; }
 
 
+    .field.delivery {
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .field.delivery .delivery-item {
+      margin-bottom: 12px;
+    }
+
+    .field.delivery .item-1 { margin-bottom: 8px; }
+    .field.delivery .item-2 { margin-bottom: 16px; }
+    .field.delivery .item-3 { margin-bottom: 24px; }
+    .field.delivery .item-4 { margin-bottom: 10px; }
+
+    .field.delivery .delivery-item:last-child {
+      margin-bottom: 0;
+    }
+
+
 
 
 @media print {
@@ -183,8 +204,17 @@ function updatePaper() {
 
   f_customer.innerText = customer.value;
 
-  const deliveries = [delivery1.value, delivery2.value, delivery3.value, delivery4.value];
-  f_delivery.innerHTML = deliveries.filter(v => v).join('<br>');
+const deliveries = [
+  delivery1.value,
+  delivery2.value,
+  delivery3.value,
+  delivery4.value
+];
+
+f_delivery.innerHTML = deliveries
+  .map((v, i) => v ? `<div class="delivery-item item-${i+1}">${v}</div>` : '')
+  .join('');
+
 
   f_board.innerText  = board.value;
   f_qty.innerText    = qty.value;

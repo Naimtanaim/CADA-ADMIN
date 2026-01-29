@@ -282,14 +282,13 @@ const deliveryInputs = [
 const f_delivery = document.getElementById('f_delivery');
 
 function updateDeliveryPreview() {
-  const lines = deliveryInputs
-    .map(i => i.value.trim())
-    .filter(v => v !== '');
+  const lines = deliveryInputs.map(i => i.value); // tidak filter
 
   f_delivery.innerHTML = lines
     .map(text => `<div class="delivery-line">${text}</div>`)
     .join('');
 }
+
 
 // realtime saat diketik
 deliveryInputs.forEach(i => {

@@ -75,6 +75,32 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
 .total { top: 110mm; left: 30mm; font-weight: bold; }
 
 
+   .field.delivery {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* item umum */
+.field.delivery .delivery-item {
+  white-space: pre-line;
+}
+
+/* jarak per kolom */
+.field.delivery .item-1 { margin-bottom: 12px; }
+.field.delivery .item-2 { margin-bottom: 15px; }
+.field.delivery .item-3 { margin-bottom: 17px; }
+.field.delivery .item-4 { margin-bottom: 10px; }
+
+.field.delivery .delivery-item:last-child {
+  margin-bottom: 0;
+}
+
+
+
+
+
 @media print {
   body { display: block; }
   form { display: none; }
@@ -115,11 +141,10 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
   <div class="form-row">
     <label>配送內容:</label>
     <input type="text" id="delivery1" placeholder="" value="">
-  <div class="form-row">
-    <label>配送內容:</label>
-    <input type="text" id="delivery2" placeholder="" value="">
   </div>
- 
+  <div class="form-row"><input type="text" id="delivery2" placeholder="" value=""></div>
+  <div class="form-row"><input type="text" id="delivery3" placeholder="" value=""></div>
+  <div class="form-row"><input type="text" id="delivery4" placeholder="" value=""></div>
 
   <!-- Paket info -->
   <div class="form-row">
@@ -152,7 +177,6 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
     <div class="field customer" id="f_customer"></div>
     <div class="field start_end" id="f_start_end"></div>
     <div class="field delivery" id="f_delivery"></div>
-    <div class="field delivery2" id="f_delivery2"></div>
     <div class="field board" id="f_board"></div>
     <div class="field qty" id="f_qty"></div>
     <div class="field weight" id="f_weight"></div>

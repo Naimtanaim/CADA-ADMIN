@@ -13,7 +13,6 @@ body {
   overflow: hidden;
 }
 
-/* ================= FORM ================= */
 form {
   width: 30%;
   padding: 20px;
@@ -23,25 +22,29 @@ form {
 }
 
 form h3 { margin-top: 0; }
+form .buttons { margin-bottom: 10px; }
+form button, form input[type="color"] {
+  margin-right: 10px;
+  padding: 6px 12px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
 
 .form-row {
   display: flex;
   align-items: center;
-  gap: 8px;
   margin-bottom: 8px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-form input {
-  font-size: 14px;
-  padding: 4px;
-  width: 200px;
-}
+.form-row label { white-space: nowrap; }
+form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px; }
 
-/* ================= PREVIEW ================= */
 .preview-container {
   width: 70%;
   padding: 20px;
+  overflow: auto;
   background: #e0e0e0;
   display: flex;
   justify-content: center;
@@ -52,155 +55,228 @@ form input {
   position: relative;
   width: 210mm;
   height: 140mm;
+  max-width: 100%;
   background: url("bg.jpg") no-repeat;
   background-size: 210mm 250mm;
-  box-shadow: 0 0 5px rgba(0,0,0,.3);
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
 }
 
-/* ===== FIELD UMUM (❗ nowrap DIHAPUS) ===== */
-.field {
-  position: absolute;
-  font-size: 15px;
-}
-
-/* posisi */
+.field { position: absolute; font-size: 15px; white-space: nowrap; }
 .date    { top: 19mm; left: 128mm; }
-.customer{ top: 29mm; left: 29mm; }
-.start_end{ top: 40mm; left: 25mm; }
-.delivery{ top: 49mm; left: 18mm; }
-.qty     { top: 90mm; left: 28mm; }
-.board   { top: 90mm; left: 43mm; }
-.weight  { top: 90mm; left: 68mm; }
-.cbm     { top: 90mm; left: 100mm; }
-.basic   { top: 100mm; left: 30mm; }
-.extra   { top: 100mm; left: 68mm; }
-.total   { top: 110mm; left: 30mm; font-weight: bold; }
+.customer { top: 29mm; left: 29mm; }
+.start_end { top: 40mm; left: 25mm; }
+.delivery { top: 49mm; left: 18mm; }
+.qty   { top: 90mm; left: 28mm; }
+.board { top: 90mm; left: 43mm; }
+.weight{ top: 90mm; left: 68mm; }
+.cbm   { top: 90mm; left: 100mm; }
+.basic { top: 100mm; left: 30mm; }
+.extra { top: 100mm; left: 68mm; }
+.total { top: 110mm; left: 30mm; font-weight: bold; }
 
-/* ===== DELIVERY FIX ===== */
-.field.delivery {
+
+   .field.delivery {
   display: flex;
   flex-direction: column;
-  white-space: normal;
-  max-width: 160mm;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
-.delivery-item {
+/* item umum */
+.field.delivery .delivery-item {
   white-space: pre-line;
 }
 
-.item-1 { margin-bottom: 12px; }
-.item-2 { margin-bottom: 15px; }
-.item-3 { margin-bottom: 17px; }
-.item-4 { margin-bottom: 10px; }
+/* jarak per kolom */
+.field.delivery .item-1 { margin-bottom: 12px; }
+.field.delivery .item-2 { margin-bottom: 15px; }
+.field.delivery .item-3 { margin-bottom: 17px; }
+.field.delivery .item-4 { margin-bottom: 10px; }
 
-.delivery-item:last-child {
+.field.delivery .delivery-item:last-child {
   margin-bottom: 0;
 }
 
-/* ================= PRINT ================= */
+
+
+
+
 @media print {
   body { display: block; }
   form { display: none; }
   .preview-container { width: 100%; padding: 0; background: none; }
-  .paper { box-shadow: none; }
+  .paper { box-shadow: none; max-width: 100%; }
 }
 </style>
 
+<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
 
 <form id="form">
-<h3>Isi Data 託運簽單</h3>
+  <h3>Isi Data 託運簽單</h3>
 
-<div class="form-row">
-  <label>日期:</label>
-  <input id="year">年
-  <input id="month">月
-  <input id="day">日
-</div>
+  <div class="buttons">
+    <button type="button" onclick="updatePaper()">更新單據</button>
+    <button type="button" onclick="window.print()">列印單據</button>
+    <label for="textColor">選擇文字顏色:</label>
+    <input type="color" id="textColor" value="#000000">
+  </div>
 
-<div class="form-row">
-  <label>顧客名稱:</label>
-  <input id="customer">
-</div>
+  <div class="form-row">
+    <label>日期:</label>
+    <input type="text" id="year" placeholder="" value=""> 年
+    <input type="text" id="month" placeholder="" value=""> 月
+    <input type="text" id="day" placeholder="" value=""> 日
+  </div>
 
-<div class="form-row"><label>配送內容:</label><input id="delivery1"></div>
-<div class="form-row"><input id="delivery2"></div>
-<div class="form-row"><input id="delivery3"></div>
-<div class="form-row"><input id="delivery4"></div>
+  <div class="form-row">
+    <label>顧客名稱:</label>
+    <input type="text" id="customer" placeholder="" value="">
+  </div>
 
-<div class="form-row">
-  <label>板數:</label><input id="qty">
-  <label>件數:</label><input id="board">
-</div>
+  <!-- 配送內容 -->
+  <div class="form-row">
+    <label>配送內容:</label>
+    <input type="text" id="delivery1" placeholder="" value="">
+  </div>
+  <div class="form-row"><input type="text" id="delivery2" placeholder="" value=""></div>
+  <div class="form-row"><input type="text" id="delivery3" placeholder="" value=""></div>
+  <div class="form-row"><input type="text" id="delivery4" placeholder="" value=""></div>
 
-<div class="form-row">
-  <label>重量:</label><input id="weight">
-  <label>才數:</label><input id="cbm">
-</div>
+  <!-- Paket info -->
+  <div class="form-row">
+    <label>板數:</label>
+    <input type="text" id="qty" value="">
+    <label>件數:</label>
+    <input type="text" id="board" value="">
+  </div>
+  <div class="form-row">
+    <label>重量:</label>
+    <input type="text" id="weight" value="">
+    <label>才數:</label>
+    <input type="text" id="cbm" value="">
+  </div>
 
-<div class="form-row">
-  <label>基本:</label><input id="basic">
-  <label>額外:</label><input id="extra">
-  <label>總計:</label><input id="total">
-</div>
-
-<button type="button" onclick="updatePaper()">更新</button>
-<button type="button" onclick="window.print()">列印</button>
+  <!-- Biaya -->
+  <div class="form-row">
+    <label>基本運費:</label>
+    <input type="text" id="basic" value="">
+    <label>總計:</label>
+    <input type="text" id="total" value="">
+    <label>額外費用:</label>
+    <input type="text" id="extra" value="">
+  </div>
 </form>
 
 <div class="preview-container">
-<div class="paper">
-  <div class="field date" id="f_date"></div>
-  <div class="field customer" id="f_customer"></div>
-  <div class="field delivery" id="f_delivery"></div>
-  <div class="field qty" id="f_qty"></div>
-  <div class="field board" id="f_board"></div>
-  <div class="field weight" id="f_weight"></div>
-  <div class="field cbm" id="f_cbm"></div>
-  <div class="field basic" id="f_basic"></div>
-  <div class="field extra" id="f_extra"></div>
-  <div class="field total" id="f_total"></div>
-</div>
+  <div class="paper" id="paper">
+    <div class="field date" id="f_date"></div>
+    <div class="field customer" id="f_customer"></div>
+    <div class="field start_end" id="f_start_end"></div>
+    <div class="field delivery" id="f_delivery"></div>
+    <div class="field board" id="f_board"></div>
+    <div class="field qty" id="f_qty"></div>
+    <div class="field weight" id="f_weight"></div>
+    <div class="field cbm" id="f_cbm"></div>
+    <div class="field basic" id="f_basic"></div>
+    <div class="field total" id="f_total"></div>
+    <div class="field extra" id="f_extra"></div>
+  </div>
 </div>
 
 <script>
-function num(v){ return parseFloat(v)||0; }
+// 1️⃣ Supabase client (hindari redeclare)
+const supabaseClient = supabase.createClient(
+  'https://uusljhegkvahcjkaxqkz.supabase.co', // Ganti URL kamu
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g'                   // Ganti API Key anon
+);
 
-function updatePaper(){
-  f_date.innerText = `${year.value}　　${month.value}　　${day.value}`;
+// 2️⃣ Helper
+function num(val) { return parseFloat(val) || 0; }
+
+function updatePaper() {
+  const y = year.value;
+  const m = month.value;
+  const d = day.value;
+
+  // 全形空白 = \u3000 (lebar sama dengan huruf China)
+  f_date.innerText = `${y}\u3000\u3000\u3000${m}\u3000\u3000\u3000${d}`;
+
   f_customer.innerText = customer.value;
 
-  const deliveries = [
-    delivery1.value,
-    delivery2.value,
-    delivery3.value,
-    delivery4.value
-  ];
+const deliveries = [
+  delivery1.value,
+  delivery2.value,
+  delivery3.value,
+  delivery4.value
+];
 
-  f_delivery.innerHTML = "";
-  deliveries.forEach((val,i)=>{
-    if(val.trim()){
-      const d = document.createElement("div");
-      d.className = `delivery-item item-${i+1}`;
-      d.textContent = val;
-      f_delivery.appendChild(d);
-    }
-  });
+f_delivery.innerHTML = ""; // reset dulu
 
-  f_qty.innerText = qty.value;
-  f_board.innerText = board.value;
+deliveries.forEach((val, index) => {
+  if (val.trim() !== "") {
+    const div = document.createElement("div");
+    div.className = `delivery-item item-${index + 1}`;
+    div.textContent = val;
+    f_delivery.appendChild(div);
+  }
+});
+
+
+
+
+  f_board.innerText  = board.value;
+  f_qty.innerText    = qty.value;
   f_weight.innerText = weight.value;
-  f_cbm.innerText = cbm.value;
-  f_basic.innerText = basic.value;
-  f_extra.innerText = extra.value;
-  f_total.innerText = (num(basic.value)+num(extra.value)).toFixed(0);
+  f_cbm.innerText    = cbm.value;
+  f_basic.innerText  = basic.value;
+  f_total.innerText  = total.value;
+  f_extra.innerText  = extra.value;
+
+  const color = textColor.value;
+  document.querySelectorAll('.paper .field').forEach(f => f.style.color = color);
 }
 
-document.querySelectorAll("input").forEach(i=>{
-  i.addEventListener("input", updatePaper);
+
+// 4️⃣ Load data dari Supabase dan bulatkan ke atas
+async function loadTotalsFromSupabase() {
+  const { data, error } = await supabaseClient
+    .from('plt_table_duplicate_total')
+    .select('*')
+    .single();
+
+  if (error) { 
+    console.error('Supabase error:', error); 
+    return; 
+  }
+
+  // Bulatkan ke atas tanpa titik
+  board.value  = Math.ceil(parseFloat(data.total_box)  || 0);
+  qty.value    = Math.ceil(parseFloat(data.total_no)   || 0);
+  weight.value = Math.ceil(parseFloat(data.total_weight) || 0);
+  cbm.value    = Math.ceil(parseFloat(data.total_cbm)    || 0);
+
+  updatePaper();
+}
+
+
+// 5️⃣ Hitung total biaya
+function calcTotal() {
+  total.value = (num(basic.value) + num(extra.value)).toFixed(0);
+  updatePaper();
+}
+
+// 6️⃣ Event DOMContentLoaded
+window.addEventListener('DOMContentLoaded', () => {
+  loadTotalsFromSupabase();
+
+  document.querySelectorAll('#form input').forEach(el => el.addEventListener('input', updatePaper));
+  basic.addEventListener('input', calcTotal);
+  extra.addEventListener('input', calcTotal);
+  textColor.addEventListener('input', updatePaper);
 });
 </script>
 

@@ -129,8 +129,15 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
   <select id="areaSelect">
     <option value="">-- Pilih Area --</option>
   </select>
-  <button type="button" onclick="searchTruckPrice()">Cari Harga</button>
 </div>
+
+<div class="form-row">
+  <label>Truck Type:</label>
+  <select id="truckTypeSelect">
+    <option value="">-- Pilih Truck --</option>
+  </select>
+</div>
+
 
     <label for="textColor">選擇文字顏色:</label>
     <input type="color" id="textColor" value="#000000">
@@ -203,7 +210,7 @@ form input { font-size: 14px; padding: 4px; box-sizing: border-box; width: 200px
     <div class="field basic" id="f_basic"></div>
     <div class="field total" id="f_total"></div>
     <div class="field extra" id="f_extra"></div>
-    <div class="field truck" id="f_truck" style="top: 55mm; left: 30mm; font-weight: bold;"></div>
+    
 
   </div>
 </div>
@@ -276,9 +283,9 @@ function calcTotal() {
 
 
 const areaSelect = document.getElementById('areaSelect');
-const f_truck = document.getElementById('f_truck'); // field di preview
+const truckTypeSelect = document.getElementById('truckTypeSelect');
 
-// load semua area dari supabase ke dropdown
+// 1️⃣ Load semua area
 async function loadAreas() {
   const { data, error } = await supabaseClient
     .from('truck_price')
@@ -286,7 +293,7 @@ async function loadAreas() {
     .order('area', { ascending: true });
 
   if (!error && data) {
-    const uniqueAreas = [...new Set(data.map(d => d.area))]; // hapus duplikat
+    const uniqueAreas = [...new Set(data.map(d => d.area))];
     uniqueAreas.forEach(area => {
       const opt = document.createElement('option');
       opt.value = area;
@@ -296,31 +303,57 @@ async function loadAreas() {
   }
 }
 
-// fungsi cari harga berdasarkan area, langsung tampil di preview
-async function searchTruckPrice() {
-  const selectedArea = areaSelect.value;
-  if (!selectedArea) return alert('Pilih area dulu!');
+// 2️⃣ Load truck_type berdasarkan area
+async function loadTruckTypes(area) {
+  truckTypeSelect.innerHTML = '<option value="">-- Pilih Truck --</option>';
+  if (!area) return;
 
   const { data, error } = await supabaseClient
     .from('truck_price')
-    .select('truck_type, price')
+    .select('truck_type')
+    .eq('area', area);
+
+  if (!error && data) {
+    data.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.truck_type;
+      opt.textContent = d.truck_type;
+      truckTypeSelect.appendChild(opt);
+    });
+  }
+}
+
+// 3️⃣ Ambil harga dari Supabase sesuai truck_type
+async function updateTruckPrice() {
+  const selectedArea = areaSelect.value;
+  const selectedTruck = truckTypeSelect.value;
+  if (!selectedArea || !selectedTruck) return;
+
+  const { data, error } = await supabaseClient
+    .from('truck_price')
+    .select('price')
     .eq('area', selectedArea)
+    .eq('truck_type', selectedTruck)
     .limit(1)
     .single();
 
-  if (error || !data) {
-    f_truck.textContent = '—';
-    basic.value = 0;
-    calcTotal();
-    alert('Harga/truk tidak ditemukan untuk area ini!');
-  } else {
-    f_truck.textContent = `  `;
-
-    // update basic & total otomatis
+  if (!error && data) {
+    // langsung update harga basic sesuai tabel
     basic.value = data.price;
     calcTotal();
+
+    // update preview truk
+    f_truck.textContent = selectedTruck;
+  } else {
+    basic.value = 0;
+    f_truck.textContent = '—';
   }
 }
+
+// Event listener
+areaSelect.addEventListener('change', () => loadTruckTypes(areaSelect.value));
+truckTypeSelect.addEventListener('change', updateTruckPrice);
+
 
 window.addEventListener('DOMContentLoaded', () => {
   loadTotalsFromSupabase(); // load totals dari supabase

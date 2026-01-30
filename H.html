@@ -268,7 +268,7 @@ async function loadTotalsFromSupabase() {
     basic.value  = Math.ceil(num(data.total_money));  // isi otomatis
     
     // jangan isi extra kalau tidak ada
-    // extra.value  = 0;  <- dihapus
+     basic.value = '';
 
     // 🔹 update preview & total
     calcTotal();  // ini akan mengupdate total dan memanggil updatePaper()
@@ -276,10 +276,14 @@ async function loadTotalsFromSupabase() {
 }
 
 function calcTotal() {
-  // kalau extra kosong, hitung total hanya dari basic
-  total.value = (num(basic.value) + (extra.value ? num(extra.value) : 0)).toFixed(0);
+  const b = Number(basic.value) || 0;
+  const e = Number(extra.value) || 0;
+  const sum = b + e;
+
+  total.value = sum > 0 ? sum : '';
   updatePaper();
 }
+
 
 function setTodayDate() {
   const today = new Date();
@@ -353,7 +357,7 @@ async function updateTruckPrice() {
     // update preview truk
     f_truck.textContent = selectedTruck;
   } else {
-    basic.value = 0;
+    basic.value = '';
     f_truck.textContent = '—';
   }
 }

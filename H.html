@@ -250,7 +250,7 @@ function updatePaper() {
 
 async function loadTotalsFromSupabase() {
   const { data, error } = await supabaseClient
-    .from('plt_table_duplicate_total')
+    .from('plt_table_duplicate_total_view')
     .select('*')
     .single();
   if (!error && data) {

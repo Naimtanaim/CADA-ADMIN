@@ -296,31 +296,48 @@ async function loadAreas() {
   }
 }
 
-// fungsi cari harga berdasarkan area, langsung tampil di preview
+<script>
 async function searchTruckPrice() {
   const selectedArea = areaSelect.value;
-  if (!selectedArea) return alert('Pilih area dulu!');
+  const totalVal = num(total.value); // total hasil perhitungan
+
+  if (!selectedArea) {
+    alert('Pilih area dulu!');
+    return;
+  }
+
+  if (!totalVal) {
+    alert('Total belum ada!');
+    return;
+  }
 
   const { data, error } = await supabaseClient
     .from('truck_price')
-    .select('truck_type, price')
+    .select('*')
     .eq('area', selectedArea)
+    .lte('min_total', totalVal)
+    .gte('max_total', totalVal)
     .limit(1)
     .single();
 
   if (error || !data) {
+    alert('Harga truk tidak ditemukan!');
     f_truck.textContent = '—';
-    basic.value = 0;
+    basic.value = '';
     calcTotal();
-    alert('Harga/truk tidak ditemukan untuk area ini!');
-  } else {
-    f_truck.textContent = `  `;
-
-    // update basic & total otomatis
-    basic.value = data.price;
-    calcTotal();
+    return;
   }
+
+  // tampilkan jenis truk
+  f_truck.textContent = data.truck_type;
+
+  // isi harga otomatis
+  basic.value = data.price;
+
+  // hitung ulang total
+  calcTotal();
 }
+
 
 window.addEventListener('DOMContentLoaded', () => {
   loadTotalsFromSupabase(); // load totals dari supabase

@@ -178,10 +178,7 @@ let palletWeight = 0;
 let initialData = [];
 
 // ===============================
-// SET WEIGHT (FIX & RAPI)
-// ===============================
-// ===============================
-// SET PALLET WEIGHT TAMBAH PER BARIS
+// SET PALLET WEIGHT
 // ===============================
 window.setWeight = async function () {
   const input = document.getElementById("palletWeight");
@@ -218,21 +215,12 @@ window.setWeight = async function () {
   loadData();
 };
 
-
-
 // ===============================
 // LOAD DATA
 // ===============================
 async function loadData() {
   tbody.innerHTML = "";
-
-  const { data } = await supabase
-    .from("plt_table_duplicate")
-    .select("*")
-    .order("NO", { ascending: true });
-
-  if (initialData.length === 0)
-    initialData = JSON.parse(JSON.stringify(data));
+  const { data } = await supabase.from("plt_table_duplicate").select("*").order("NO");
 
   data.forEach(row => {
     const tr = document.createElement("tr");
@@ -244,91 +232,41 @@ async function loadData() {
       <td>${row.CBM ?? 0}</td>
       <td>${row.箱數 ?? 0}</td>
       <td>${row.重量_总 ?? row.重量}</td>
-
       <td><button class="delete-btn">Hapus 删除</button></td>
     `;
     tbody.appendChild(tr);
   });
 
-  addDeleteEvents();
-  calculateTotals();
+  calculateTotals(); // pastikan dipanggil DI SINI
 }
 
+
 // ===============================
-// HITUNG TOTAL (FIX FLOATING)
+// HITUNG TOTAL
 // ===============================
 function calculateTotals() {
-  let totalCbm = 0,
-      totalBox = 0,
-      totalWeight = 0;
+  let totalCbm = 0, totalBox = 0, totalWeight = 0;
 
   document.querySelectorAll("#pltTable tbody tr").forEach(row => {
-    totalCbm += parseFloat(row.cells[3].innerText) || 0;
-    totalBox += parseFloat(row.cells[5].innerText) || 0;
-    totalWeight += parseFloat(row.cells[6].innerText) || 0;
+    const cbm = parseFloat(row.cells[3].innerText.replace(",", ".")) || 0;
+    const box = parseFloat(row.cells[5].innerText.replace(",", ".")) || 0;
+    const weight = parseFloat(row.cells[6].innerText.replace(/[^0-9\.-]/g, "").replace(",", ".")) || 0;
+
+
+    totalCbm += cbm;
+    totalBox += box;
+    totalWeight += weight;
   });
 
-  // Total CBM dan Box tetap pakai fixed atau integer
   document.getElementById("totalCbm").innerText = totalCbm.toFixed(2).replace(/\.?0+$/, "");
   document.getElementById("totalBox").innerText = totalBox;
+  document.getElementById("totalWeight").innerText = totalWeight.toFixed(2).replace(/\.?0+$/, "");
 
-  // Total Weight: hilangkan nol berlebihan
-  document.getElementById("totalWeight").innerText = totalWeight
-    .toFixed(2)       // 1234.00
-    .replace(/\.?0+$/, ""); // jadi 1234 atau 1234.5
-
-  // Tampilkan warning kalau > 4000 kg
   weightWarning.style.display = totalWeight > 4000 ? "block" : "none";
 }
 
-
 // ===============================
-// DELETE PER BARIS
-// ===============================
-document.querySelector(".btn-delete-all").addEventListener("click", async () => {
-  if (!confirm("Kembalikan semua data ke tabel utama?")) return;
-
-  const { data, error } = await supabase
-    .from("plt_table_duplicate")
-    .select("*");
-
-  if (error || !data.length) {
-    alert("Tidak ada data duplicate");
-    return;
-  }
-
-  // 1. restore SEMUA dulu
-  const restoreData = data.map(r => {
-    const x = { ...r };
-    delete x.id;
-    delete x.重量_加;
-    delete x.重量_总;
-    return x;
-  });
-
-  const { error: upErr } = await supabase
-    .from("plt_table")
-    .upsert(restoreData, { onConflict: "NO" });
-
-  if (upErr) {
-    alert("Restore gagal:\n" + upErr.message);
-    return; // ⛔ JANGAN DELETE
-  }
-
-  // 2. baru hapus duplicate
-  await supabase
-    .from("plt_table_duplicate")
-    .delete()
-    .neq("NO", 0);
-
-  tbody.innerHTML = "";
-  calculateTotals();
-  alert("✔ Semua data berhasil dikembalikan");
-});
-
-
-// ===============================
-// DELETE SEMUA
+// DELETE SEMUA & RESTORE
 // ===============================
 document.querySelector(".btn-delete-all").addEventListener("click", async () => {
   if (!confirm("Kembalikan semua data ke tabel utama?")) return;
@@ -342,7 +280,6 @@ document.querySelector(".btn-delete-all").addEventListener("click", async () => 
     return;
   }
 
-  // 1. restore SEMUA dulu
   const restoreData = data.map(r => {
     const x = { ...r };
     delete x.id;
@@ -351,27 +288,20 @@ document.querySelector(".btn-delete-all").addEventListener("click", async () => 
     return x;
   });
 
-  const { error: upErr } = await supabase
-    .from("plt_table")
-    .upsert(restoreData, { onConflict: "NO" });
+  try {
+    for (const row of restoreData) {
+      await supabase.from("plt_table").insert([row]);
+    }
 
-  if (upErr) {
-    alert("Restore gagal:\n" + upErr.message);
-    return; // ⛔ JANGAN DELETE
+    await supabase.from("plt_table_duplicate").delete().neq("NO", 0);
+
+    tbody.innerHTML = "";
+    calculateTotals();
+    alert("✔ Semua data berhasil dikembalikan");
+  } catch (err) {
+    alert("Restore gagal:\n" + err.message);
   }
-
-  // 2. baru hapus duplicate
-  await supabase
-    .from("plt_table_duplicate")
-    .delete()
-    .neq("NO", 0);
-
-  tbody.innerHTML = "";
-  calculateTotals();
-  alert("✔ Semua data berhasil dikembalikan");
 });
-
-
 
 // ===============================
 // DUPLICATE PLT

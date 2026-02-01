@@ -266,6 +266,76 @@ function calculateTotals() {
 }
 
 // ===============================
+// DELETE PER BARIS & RESTORE
+// ===============================
+function addDeleteEvents() {
+  tbody.addEventListener("click", async function(e) {
+    if (!e.target.classList.contains("delete-btn")) return;
+
+    if (!confirm("Hapus baris ini dan kembalikan ke tabel utama?")) return;
+
+    const row = e.target.closest("tr");
+    const no = row.cells[0].innerText; // Ambil NO dari kolom pertama
+
+    try {
+      // 1. Ambil data baris dari duplicate
+      const { data, error } = await supabase
+        .from("plt_table_duplicate")
+        .select("*")
+        .eq("NO", no)
+        .single(); // ambil satu row
+
+      if (error || !data) {
+        alert("Gagal ambil data duplicate: " + (error?.message || "Data tidak ditemukan"));
+        return;
+      }
+
+      // 2. Persiapkan data untuk restore ke tabel asli
+      const restoreRow = { ...data };
+      delete restoreRow.id;
+      delete restoreRow.重量_加;
+      delete restoreRow.重量_总;
+
+      // 3. Masukkan ke tabel asli
+      const { error: insertErr } = await supabase
+        .from("plt_table")
+        .insert([restoreRow]);
+
+      if (insertErr) {
+        alert("Gagal kembalikan ke tabel utama: " + insertErr.message);
+        return;
+      }
+
+      // 4. Hapus baris dari duplicate
+      const { error: deleteErr } = await supabase
+        .from("plt_table_duplicate")
+        .delete()
+        .eq("NO", no);
+
+      if (deleteErr) {
+        alert("Gagal hapus dari duplicate: " + deleteErr.message);
+        return;
+      }
+
+      // 5. Hapus row dari tabel HTML
+      row.remove();
+
+      // 6. Hitung ulang totals
+      calculateTotals();
+
+      alert("" + no + " berhasil dikembalikan ke tabel utama");
+    } catch (err) {
+      alert("Terjadi kesalahan:\n" + err.message);
+    }
+  });
+}
+
+// Panggil addDeleteEvents() setelah loadData()
+addDeleteEvents();
+
+
+
+// ===============================
 // DELETE SEMUA & RESTORE
 // ===============================
 document.querySelector(".btn-delete-all").addEventListener("click", async () => {
@@ -302,6 +372,7 @@ document.querySelector(".btn-delete-all").addEventListener("click", async () => 
     alert("Restore gagal:\n" + err.message);
   }
 });
+
 
 // ===============================
 // DUPLICATE PLT

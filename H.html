@@ -287,11 +287,12 @@ function calcTotal() {
 
 function setTodayDate() {
   const today = new Date();
-
-  document.getElementById('year').value  = today.getFullYear();
-  document.getElementById('month').value = String(today.getMonth() + 1).padStart(2, '0');
-  document.getElementById('day').value   = String(today.getDate()).padStart(2, '0');
+  year.value  = today.getFullYear();
+  month.value = String(today.getMonth() + 1).padStart(2, '0');
+  day.value   = String(today.getDate()).padStart(2, '0');
+  updatePaper();
 }
+
 
 
 const areaSelect = document.getElementById('areaSelect');
@@ -381,9 +382,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 window.addEventListener('DOMContentLoaded', () => {
+  setTodayDate();            // ⬅️ TAMBAHKAN INI
   loadTotalsFromSupabase();
 
-  document.querySelectorAll('#form input').forEach(el => el.addEventListener('input', updatePaper));
+  document.querySelectorAll('#form input').forEach(el =>
+    el.addEventListener('input', updatePaper)
+  );
   basic.addEventListener('input', calcTotal);
   extra.addEventListener('input', calcTotal);
   textColor.addEventListener('input', updatePaper);
@@ -391,6 +395,5 @@ window.addEventListener('DOMContentLoaded', () => {
   deliveryInputs.forEach(i => i.addEventListener('input', updateDeliveryPreview));
 });
 </script>
-
 </body>
 </html>

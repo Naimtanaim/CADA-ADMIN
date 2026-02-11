@@ -285,8 +285,8 @@ function renderTable(data){
             <td>${item.jam_masuk}</td>
             <td>${item.jam_pulang}</td>
             <td>${Number(item.total_jam)}</td>
-            <td>Rp ${Number(item.tarif).toLocaleString()}</td>
-            <td>Rp ${Number(item.total_upah).toLocaleString()}</td>
+            <td>$ ${Number(item.tarif).toLocaleString()}</td>
+            <td>$ ${Number(item.total_upah).toLocaleString()}</td>
             <td class="no-print">
                 <button onclick="hapusData(${item.id})">Hapus</button>
             </td>

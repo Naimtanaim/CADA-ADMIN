@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Lembur Perusahaan</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:1100px;
+    margin:auto;
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* HEADER PERUSAHAAN */
+.company-header{
+    text-align:center;
+    border-bottom:2px solid #000;
+    padding-bottom:10px;
+    margin-bottom:20px;
+}
+
+.company-header img{
+    height:60px;
+}
+
+.company-name{
+    font-size:20px;
+    font-weight:bold;
+}
+
+.company-sub{
+    font-size:14px;
+}
+
+h2{
+    text-align:center;
+    margin:15px 0;
+}
+
+.form-group{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+    gap:10px;
+    margin-bottom:15px;
+}
+
+input, select, button{
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #ccc;
+}
+
+button{
+    background:#007bff;
+    color:white;
+    cursor:pointer;
+    border:none;
+}
+
+button:hover{background:#0056b3;}
+
+.print-btn{
+    background:green;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px;
+}
+
+th, td{
+    padding:8px;
+    border:1px solid #000;
+    text-align:center;
+    font-size:14px;
+}
+
+th{
+    background:#000;
+    color:white;
+}
+
+.total-box{
+    margin-top:15px;
+    font-weight:bold;
+    text-align:right;
+}
+
+.total-jam{
+    margin-top:15px;
+    font-weight:bold;
+    text-align:right;
+}
+
+.signature{
+    margin-top:60px;
+    display:flex;
+    justify-content:space-between;
+}
+
+.signature div{
+    text-align:center;
+    width:200px;
+}
+
+/* PRINT STYLE */
+@media print {
+
+    body{
+        background:white;
+        padding:0;
+    }
+
+    .form-group,
+    .print-btn,
+    .no-print{
+        display:none;
+    }
+
+    .container{
+        box-shadow:none;
+        border:none;
+    }
+
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="company-header">
+        <img src="logo.png" onerror="this.style.display='none'">
+        <div class="company-name">CADA ERISTIC INDUSTRY CO., LTD</div>
+        <div class="company-sub">
+            Laporan Lembur Karyawan / 员工加班报告
+        </div>
+    </div>
+
+    <h2>📒 Catatan Lembur / 加班记录</h2>
+
+    <div class="form-group no-print">
+        <input type="text" id="nama" placeholder="Nama / 姓名">
+        <input type="date" id="tanggal">
+        <input type="time" id="jamMasuk">
+        <input type="time" id="jamPulang">
+        <input type="number" id="tarif" placeholder="Tarif/Jam 每小时工资">
+        <input type="month" id="filterBulan">
+        <button onclick="tambahData()">Tambah</button>
+        <button onclick="filterData()">Filter Bulan</button>
+        <button class="print-btn no-print" onclick="window.print()">🖨 Print Laporan</button>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Nama 姓名</th>
+            <th>Tanggal 日期</th>
+            <th>Masuk 上班</th>
+            <th>Pulang 下班</th>
+            <th>Jam 总小时</th>
+            <th>Tarif 工资</th>
+            <th>Total 总工资</th>
+            <th class="no-print">Aksi 操作</th>
+        </tr>
+        </thead>
+        <tbody id="dataLembur"></tbody>
+    </table>
+       <!-- Total Jam Bulanan -->
+    <div class="total-jam" id="totalJamBulanan">Total Lembur Bulan Ini / 本月总加班小时: 0</div>
+    <div class="total-box">
+        Total Gaji Lembur / 加班总工资 : $ <span id="grandTotal">0</span>
+    </div>
+
+    <div class="signature">
+        <div>
+            Disetujui / 批准<br><br><br>
+            ___________________
+        </div>
+        <div>
+            HRD / 人事部<br><br><br>
+            ___________________
+        </div>
+        <div>
+            Karyawan / 员工<br><br><br>
+            ___________________
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://uusljhegkvahcjkaxqkz.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1c2xqaGVna3ZhaGNqa2F4cWt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODMzMTIsImV4cCI6MjA3MDA1OTMxMn0.eio4OSjH30XzfXn-9UxQRVwleGKi2dvdWo6Ggx8FW1g";
+
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let grandTotal = 0;
+
+// ================= LOAD DATA =================
+async function loadData(bulanFilter = null){
+    let query = supabaseClient
+        .from("lembur_company")
+        .select("*")
+        .order("tanggal", { ascending: false });
+
+    if(bulanFilter){
+        query = query.like("tanggal", bulanFilter + "%");
+    }
+
+    const { data, error } = await query;
+
+    if(error){
+        alert("Error load data!");
+        console.log(error);
+        return;
+    }
+
+    renderTable(data);
+}
+
+// ================= TAMBAH DATA =================
+async function tambahData(){
+    const nama = document.getElementById("nama").value;
+    const tanggal = document.getElementById("tanggal").value;
+    const jamMasuk = document.getElementById("jamMasuk").value;
+    const jamPulang = document.getElementById("jamPulang").value;
+    const tarif = parseFloat(document.getElementById("tarif").value);
+
+    if(!nama || !tanggal || !jamMasuk || !jamPulang || !tarif){
+        alert("Lengkapi data!");
+        return;
+    }
+
+    const start = new Date(`1970-01-01T${jamMasuk}:00`);
+    const end = new Date(`1970-01-01T${jamPulang}:00`);
+    const diff = (end - start) / 1000 / 60 / 60;
+
+    if(diff <= 0){
+        alert("Jam salah!");
+        return;
+    }
+
+    const totalUpah = diff * tarif;
+
+    const { error } = await supabaseClient
+        .from("lembur_company")
+        .insert([{
+            nama,
+            tanggal,
+            jam_masuk: jamMasuk,
+            jam_pulang: jamPulang,
+            total_jam: diff,
+            tarif,
+            total_upah: totalUpah
+        }]);
+
+    if(error){
+        alert("Gagal simpan!");
+        console.log(error);
+        return;
+    }
+
+    clearInput();
+    loadData();
+}
+
+// ================= RENDER =================
+function renderTable(data){
+    const tbody = document.getElementById("dataLembur");
+    tbody.innerHTML="";
+    grandTotal = 0;
+    let totalJamBulanan = 0;
+
+    data.forEach(item=>{
+        grandTotal += Number(item.total_upah);
+        totalJamBulanan += Number(item.total_jam);
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${item.nama}</td>
+            <td>${item.tanggal}</td>
+            <td>${item.jam_masuk}</td>
+            <td>${item.jam_pulang}</td>
+            <td>${Number(item.total_jam)}</td>
+            <td>Rp ${Number(item.tarif).toLocaleString()}</td>
+            <td>Rp ${Number(item.total_upah).toLocaleString()}</td>
+            <td class="no-print">
+                <button onclick="hapusData(${item.id})">Hapus</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    document.getElementById("grandTotal").innerText = grandTotal.toLocaleString();
+    document.getElementById("totalJamBulanan").innerText = "Total Lembur Bulan Ini / 本月总加班小时: " + totalJamBulanan.toFixed(2);
+}
+
+// ================= HAPUS =================
+async function hapusData(id){
+    if(!confirm("Yakin hapus data?")) return;
+
+    await supabaseClient
+        .from("lembur_company")
+        .delete()
+        .eq("id", id);
+
+    loadData();
+}
+
+// ================= FILTER =================
+async function filterData(){
+    const bulan = document.getElementById("filterBulan").value;
+
+    if(!bulan){
+        loadData();
+        return;
+    }
+
+    loadData(bulan);
+}
+
+// ================= CLEAR =================
+function clearInput(){
+    document.querySelectorAll("input[type=text], input[type=date], input[type=time], input[type=number]")
+        .forEach(i=>i.value="");
+}
+
+loadData();
+</script>
+
+</body>
+</html>

@@ -156,13 +156,16 @@ th{
         <input type="text" id="nama" placeholder="Nama / 姓名">
         <input type="date" id="tanggal">
         <input type="time" id="jamMasuk">
-        <input type="time" id="jamPulang">
-        <input type="number" id="tarif" placeholder="Tarif/Jam 每小时工资">
+        <input type="time" id="jamPulang">  
         <input type="month" id="filterBulan">
         <button onclick="tambahData()">Tambah</button>
         <button onclick="filterData()">Filter Bulan</button>
         <button class="print-btn no-print" onclick="window.print()">🖨 Print Laporan</button>
     </div>
+     <select id="jenisHari">
+    <option value="kerja">Hari Kerja 工作日</option>
+    <option value="libur">Hari Libur 假日</option>
+</select>
 
     <table>
         <thead>

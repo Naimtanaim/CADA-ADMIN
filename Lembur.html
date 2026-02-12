@@ -22,6 +22,7 @@ body{
     box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
+/* HEADER PERUSAHAAN */
 .company-header{
     text-align:center;
     border-bottom:2px solid #000;
@@ -29,16 +30,23 @@ body{
     margin-bottom:20px;
 }
 
-.company-header img{ height:60px; }
+.company-header img{
+    height:60px;
+}
 
 .company-name{
     font-size:20px;
     font-weight:bold;
 }
 
-.company-sub{ font-size:14px; }
+.company-sub{
+    font-size:14px;
+}
 
-h2{ text-align:center; margin:15px 0; }
+h2{
+    text-align:center;
+    margin:15px 0;
+}
 
 .form-group{
     display:grid;
@@ -61,7 +69,10 @@ button{
 }
 
 button:hover{background:#0056b3;}
-.print-btn{ background:green; }
+
+.print-btn{
+    background:green;
+}
 
 table{
     width:100%;
@@ -81,17 +92,48 @@ th{
     color:white;
 }
 
-.total-box,
+.total-box{
+    margin-top:15px;
+    font-weight:bold;
+    text-align:right;
+}
+
 .total-jam{
     margin-top:15px;
     font-weight:bold;
     text-align:right;
 }
 
+.signature{
+    margin-top:60px;
+    display:flex;
+    justify-content:space-between;
+}
+
+.signature div{
+    text-align:center;
+    width:200px;
+}
+
+/* PRINT STYLE */
 @media print {
-    body{ background:white; padding:0; }
-    .form-group, .print-btn, .no-print{ display:none; }
-    .container{ box-shadow:none; border:none; }
+
+    body{
+        background:white;
+        padding:0;
+    }
+
+    .form-group,
+    .print-btn,
+    .no-print{
+        display:none;
+    }
+
+    .container{
+        box-shadow:none;
+        border:none;
+    }
+
 }
 </style>
 </head>
@@ -100,55 +142,53 @@ th{
 
 <div class="container">
 
-<div class="company-header">
-    <img src="logo.png" onerror="this.style.display='none'">
-    <div class="company-name">CADA ERISTIC INDUSTRY CO., LTD</div>
-    <div class="company-sub">Laporan Lembur Karyawan / 员工加班报告</div>
-</div>
+    <div class="company-header">
+        <img src="logo.png" onerror="this.style.display='none'">
+        <div class="company-name">CADA ERISTIC INDUSTRY CO., LTD</div>
+        <div class="company-sub">
+            Laporan Lembur Karyawan / 员工加班报告
+        </div>
+    </div>
 
-<h2>📒 Catatan Lembur / 加班记录</h2>
+    <h2>📒 Catatan Lembur / 加班记录</h2>
 
-<div class="form-group no-print">
-    <input type="text" id="nama" placeholder="Nama / 姓名">
-    <input type="date" id="tanggal">
-    <input type="time" id="jamMasuk">
-    <input type="time" id="jamPulang">
-    
-    <select id="jenisHari">
-        <option value="kerja">Hari Kerja 工作日</option>
-        <option value="libur">Hari Libur 假日</option>
-    </select>
+    <div class="form-group no-print">
+        <input type="text" id="nama" placeholder="Nama / 姓名">
+        <input type="date" id="tanggal">
+        <input type="time" id="jamMasuk">
+        <input type="time" id="jamPulang">  
+        <input type="month" id="filterBulan">
+        <button onclick="tambahData()">Tambah</button>
+        <button onclick="filterData()">Filter Bulan</button>
+        <button class="print-btn no-print" onclick="window.print()">🖨 Print Laporan</button>
+    </div>
+     <select id="jenisHari">
+    <option value="kerja">Hari Kerja 工作日</option>
+    <option value="libur">Hari Libur 假日</option>
+</select>
 
-    <input type="month" id="filterBulan">
+    <table>
+        <thead>
+        <tr>
+            <th>Nama 姓名</th>
+            <th>Tanggal 日期</th>
+            <th>Masuk 上班</th>
+            <th>Pulang 下班</th>
+            <th>Jam 总小时</th>
+            <th>Tarif 工资</th>
+            <th>Total 总工资</th>
+            <th class="no-print">Aksi 操作</th>
+        </tr>
+        </thead>
+        <tbody id="dataLembur"></tbody>
+    </table>
+       <!-- Total Jam Bulanan -->
+    <div class="total-jam" id="totalJamBulanan">Total Lembur Bulan Ini / 本月总加班小时: 0</div>
+    <div class="total-box">
+        Total Gaji Lembur / 加班总工资 : $ <span id="grandTotal">0</span>
+    </div>
 
-    <button onclick="tambahData()">Tambah</button>
-    <button onclick="filterData()">Filter Bulan</button>
-    <button class="print-btn" onclick="window.print()">🖨 Print</button>
-</div>
-
-<table>
-<thead>
-<tr>
-    <th>Nama</th>
-    <th>Tanggal</th>
-    <th>Masuk</th>
-    <th>Pulang</th>
-    <th>Jam</th>
-    <th>Tarif</th>
-    <th>Total</th>
-    <th class="no-print">Aksi</th>
-</tr>
-</thead>
-<tbody id="dataLembur"></tbody>
-</table>
-
-<div class="total-jam" id="totalJamBulanan">
-Total Lembur Bulan Ini: 0
-</div>
-
-<div class="total-box">
-Total Gaji Lembur : $ <span id="grandTotal">0</span>
-</div>
+    </div>
 
 </div>
 
@@ -160,14 +200,14 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const UPAH_PER_JAM = 190;
 let grandTotal = 0;
 
+// ================= LOAD DATA =================
 async function loadData(bulanFilter = null){
     let query = supabaseClient
         .from("lembur_company")
         .select("*")
-        .order("tanggal", { ascending:false });
+        .order("tanggal", { ascending: false });
 
     if(bulanFilter){
         query = query.like("tanggal", bulanFilter + "%");
@@ -176,13 +216,15 @@ async function loadData(bulanFilter = null){
     const { data, error } = await query;
 
     if(error){
-        alert("Gagal load data");
+        alert("Error load data!");
+        console.log(error);
         return;
     }
 
     renderTable(data);
 }
 
+// ================= TAMBAH DATA =================
 async function tambahData(){
     const nama = document.getElementById("nama").value;
     const tanggal = document.getElementById("tanggal").value;
@@ -190,38 +232,54 @@ async function tambahData(){
     const jamPulang = document.getElementById("jamPulang").value;
     const jenisHari = document.getElementById("jenisHari").value;
 
+    const UPAH_PER_JAM = 190; // Upah minimum Taiwan
+
     if(!nama || !tanggal || !jamMasuk || !jamPulang){
         alert("Lengkapi data!");
         return;
     }
 
-    let start = new Date(`1970-01-01T${jamMasuk}:00`);
-    let end   = new Date(`1970-01-01T${jamPulang}:00`);
-
-    if(end <= start){
-        end.setDate(end.getDate() + 1); // handle lewat tengah malam
-    }
+    const start = new Date(`1970-01-01T${jamMasuk}:00`);
+    const end = new Date(`1970-01-01T${jamPulang}:00`);
 
     let totalJam = (end - start) / 1000 / 60 / 60;
 
-    // potong istirahat 12-13
+    if (totalJam <= 0) {
+        alert("Jam salah!");
+        return;
+    }
+
+    // Potong istirahat 12-13
     const breakStart = new Date("1970-01-01T12:00:00");
     const breakEnd   = new Date("1970-01-01T13:00:00");
 
-    if(start < breakEnd && end > breakStart){
+    if (start < breakEnd && end > breakStart) {
         totalJam -= 1;
     }
 
-    if(totalJam < 0) totalJam = 0;
+    if (totalJam < 0) totalJam = 0;
 
     let totalUpah = 0;
 
-    if(totalJam <= 2){
-        totalUpah = totalJam * UPAH_PER_JAM * 1.34;
-    } else {
-        totalUpah =
-            (2 * UPAH_PER_JAM * 1.34) +
-            ((totalJam - 2) * UPAH_PER_JAM * 1.67);
+    // ================= HITUNG OTOMATIS =================
+    if(jenisHari === "kerja"){
+        if(totalJam <= 2){
+            totalUpah = totalJam * UPAH_PER_JAM * 1.34;
+        } else {
+            totalUpah =
+                (2 * UPAH_PER_JAM * 1.34) +
+                ((totalJam - 2) * UPAH_PER_JAM * 1.67);
+        }
+    }
+
+    if(jenisHari === "libur"){
+        if(totalJam <= 2){
+            totalUpah = totalJam * UPAH_PER_JAM * 1.34;
+        } else {
+            totalUpah =
+                (2 * UPAH_PER_JAM * 1.34) +
+                ((totalJam - 2) * UPAH_PER_JAM * 1.67);
+        }
     }
 
     totalUpah = Math.round(totalUpah);
@@ -233,14 +291,15 @@ async function tambahData(){
             tanggal,
             jam_masuk: jamMasuk,
             jam_pulang: jamPulang,
-            total_jam: totalJam.toFixed(2),
+            total_jam: totalJam,
             tarif: UPAH_PER_JAM,
             total_upah: totalUpah,
             jenis_hari: jenisHari
         }]);
 
     if(error){
-        alert("Gagal simpan");
+        alert("Gagal simpan!");
+        console.log(error);
         return;
     }
 
@@ -248,9 +307,11 @@ async function tambahData(){
     loadData();
 }
 
+
+// ================= RENDER =================
 function renderTable(data){
     const tbody = document.getElementById("dataLembur");
-    tbody.innerHTML = "";
+    tbody.innerHTML="";
     grandTotal = 0;
     let totalJamBulanan = 0;
 
@@ -264,7 +325,7 @@ function renderTable(data){
             <td>${item.tanggal}</td>
             <td>${item.jam_masuk}</td>
             <td>${item.jam_pulang}</td>
-            <td>${Number(item.total_jam).toFixed(2)}</td>
+            <td>${Number(item.total_jam)}</td>
             <td>$ ${Number(item.tarif).toLocaleString()}</td>
             <td>$ ${Number(item.total_upah).toLocaleString()}</td>
             <td class="no-print">
@@ -274,15 +335,13 @@ function renderTable(data){
         tbody.appendChild(row);
     });
 
-    document.getElementById("grandTotal").innerText =
-        grandTotal.toLocaleString();
-
-    document.getElementById("totalJamBulanan").innerText =
-        "Total Lembur Bulan Ini: " + totalJamBulanan.toFixed(2);
+    document.getElementById("grandTotal").innerText = grandTotal.toLocaleString();
+    document.getElementById("totalJamBulanan").innerText = "Total Lembur Bulan Ini / 本月总加班小时: " + totalJamBulanan.toFixed(2);
 }
 
+// ================= HAPUS =================
 async function hapusData(id){
-    if(!confirm("Yakin hapus?")) return;
+    if(!confirm("Yakin hapus data?")) return;
 
     await supabaseClient
         .from("lembur_company")
@@ -292,17 +351,21 @@ async function hapusData(id){
     loadData();
 }
 
-function filterData(){
+// ================= FILTER =================
+async function filterData(){
     const bulan = document.getElementById("filterBulan").value;
+
     if(!bulan){
         loadData();
-    } else {
-        loadData(bulan);
+        return;
     }
+
+    loadData(bulan);
 }
 
+// ================= CLEAR =================
 function clearInput(){
-    document.querySelectorAll("input[type=text], input[type=date], input[type=time]")
+    document.querySelectorAll("input[type=text], input[type=date], input[type=time], input[type=number]")
         .forEach(i=>i.value="");
 }
 

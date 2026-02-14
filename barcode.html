@@ -15,7 +15,7 @@ body{
 }
 
 .container{
-    max-width:600px;
+    max-width:700px;
     margin:auto;
     background:white;
     padding:20px;
@@ -47,11 +47,26 @@ th, td{
 }
 
 button{
-    padding:5px 10px;
+    padding:6px 12px;
     background:#007bff;
     color:white;
     border:none;
     cursor:pointer;
+    margin-top:10px;
+}
+
+.no-print{
+    margin-top:15px;
+}
+
+/* Saat print */
+@media print{
+    button, input, h2 {
+        display:none;
+    }
+    body{
+        background:white;
+    }
 }
 </style>
 </head>
@@ -65,13 +80,17 @@ button{
            placeholder="Scan barcode di sini..."
            autofocus>
 
+    <div class="no-print">
+        <button onclick="printAll()">Print Semua</button>
+        <button onclick="clearData()">Hapus Semua</button>
+    </div>
+
     <table>
         <thead>
             <tr>
                 <th>No</th>
                 <th>Barcode</th>
                 <th>Preview</th>
-                <th>Print</th>
             </tr>
         </thead>
         <tbody id="dataTable"></tbody>
@@ -123,46 +142,29 @@ function loadData(){
                 <td>${item.no}</td>
                 <td>${item.kode}</td>
                 <td><svg id="barcode_${item.no}"></svg></td>
-                <td><button onclick="printBarcode('${item.kode}')">Print</button></td>
             </tr>
         `;
     });
 
-    // Generate semua barcode di tabel
     data.forEach(item=>{
         JsBarcode(`#barcode_${item.no}`, item.kode, {
             format:"CODE128",
             width:1.5,
             height:40,
-            displayValue:false
+            displayValue:true
         });
     });
 }
 
-function printBarcode(kode){
-    let win = window.open("", "", "width=400,height=300");
+function printAll(){
+    window.print();
+}
 
-    win.document.write(`
-        <html>
-        <head>
-        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
-        </head>
-        <body style="text-align:center;">
-            <svg id="printBarcode"></svg>
-            <script>
-                JsBarcode("#printBarcode", "${kode}", {
-                    format:"CODE128",
-                    width:2,
-                    height:70,
-                    displayValue:true
-                });
-                window.print();
-            <\/script>
-        </body>
-        </html>
-    `);
-
-    win.document.close();
+function clearData(){
+    if(confirm("Hapus semua data?")){
+        localStorage.removeItem("dataBarcode");
+        loadData();
+    }
 }
 
 </script>

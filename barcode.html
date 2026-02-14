@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Input Barcode Manual</title>
+<title>Scan Barcode Otomatis</title>
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
@@ -15,7 +15,7 @@ body{
 }
 
 .container{
-    max-width:600px;
+    max-width:500px;
     margin:auto;
     background:white;
     padding:20px;
@@ -27,21 +27,11 @@ h2{
     text-align:center;
 }
 
-input, button{
+input{
     width:100%;
-    padding:10px;
-    margin-top:10px;
-}
-
-button{
-    background:#28a745;
-    color:white;
-    border:none;
-    cursor:pointer;
-}
-
-button:hover{
-    background:#1e7e34;
+    padding:12px;
+    font-size:18px;
+    text-align:center;
 }
 
 table{
@@ -60,33 +50,37 @@ th, td{
     text-align:center;
     margin-top:20px;
 }
+
+button{
+    margin-top:10px;
+    padding:8px 15px;
+    background:#007bff;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-    <h2>Input Barcode Sesuai Nomor</h2>
+    <h2>Scan Barcode</h2>
 
-    <label>Nama Barang</label>
-    <input type="text" id="namaBarang" placeholder="Masukkan Nama Barang">
-
-    <label>Nomor Barcode</label>
-    <input type="text" id="kodeBarcode" placeholder="Masukkan Nomor Barcode">
-
-    <button onclick="simpanData()">Simpan & Buat Barcode</button>
+    <input type="text" id="barcodeInput" 
+           placeholder="Scan barcode di sini..."
+           autofocus>
 
     <div class="print-area">
-        <svg id="barcode"></svg>
-        <br>
-        <button onclick="printBarcode()">Print Barcode</button>
+        <svg id="barcode"></svg><br>
+        <button onclick="printBarcode()">Print</button>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Nama Barang</th>
-                <th>Kode Barcode</th>
+                <th>No</th>
+                <th>Barcode</th>
             </tr>
         </thead>
         <tbody id="dataTable"></tbody>
@@ -95,18 +89,37 @@ th, td{
 
 <script>
 
+let nomor = 1;
 loadData();
 
-function simpanData(){
-    let nama = document.getElementById("namaBarang").value.trim();
-    let kode = document.getElementById("kodeBarcode").value.trim();
+document.getElementById("barcodeInput")
+.addEventListener("keypress", function(e){
+    if(e.key === "Enter"){
+        simpanData();
+    }
+});
 
-    if(nama === "" || kode === ""){
-        alert("Nama dan Nomor Barcode harus diisi!");
+function simpanData(){
+    let kode = document.getElementById("barcodeInput").value.trim();
+    if(kode === "") return;
+
+    let data = JSON.parse(localStorage.getItem("dataBarcode")) || [];
+
+    // Cek jika sudah ada
+    if(data.find(item => item.kode === kode)){
+        alert("Barcode sudah tersimpan!");
+        document.getElementById("barcodeInput").value="";
         return;
     }
 
-    // Generate barcode sesuai input
+    data.push({
+        no: data.length + 1,
+        kode: kode
+    });
+
+    localStorage.setItem("dataBarcode", JSON.stringify(data));
+
+    // Tampilkan barcode
     JsBarcode("#barcode", kode, {
         format:"CODE128",
         width:2,
@@ -114,37 +127,19 @@ function simpanData(){
         displayValue:true
     });
 
-    let data = JSON.parse(localStorage.getItem("dataBarang")) || [];
-
-    // Cek jika barcode sudah ada
-    let cek = data.find(item => item.kode === kode);
-    if(cek){
-        alert("Barcode sudah ada!");
-        return;
-    }
-
-    data.push({
-        nama: nama,
-        kode: kode
-    });
-
-    localStorage.setItem("dataBarang", JSON.stringify(data));
-
-    document.getElementById("namaBarang").value="";
-    document.getElementById("kodeBarcode").value="";
-
+    document.getElementById("barcodeInput").value="";
     loadData();
 }
 
 function loadData(){
-    let data = JSON.parse(localStorage.getItem("dataBarang")) || [];
+    let data = JSON.parse(localStorage.getItem("dataBarcode")) || [];
     let table = document.getElementById("dataTable");
     table.innerHTML="";
 
     data.forEach(item=>{
         table.innerHTML += `
             <tr>
-                <td>${item.nama}</td>
+                <td>${item.no}</td>
                 <td>${item.kode}</td>
             </tr>
         `;

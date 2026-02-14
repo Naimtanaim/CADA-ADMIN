@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Input Barcode Manual</title>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+<style>
+body{
+    font-family: Arial;
+    background:#f4f6f9;
+    padding:20px;
+}
+
+.container{
+    max-width:600px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h2{
+    text-align:center;
+}
+
+input, button{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+}
+
+button{
+    background:#28a745;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1e7e34;
+}
+
+table{
+    width:100%;
+    margin-top:20px;
+    border-collapse:collapse;
+}
+
+th, td{
+    border:1px solid #ddd;
+    padding:8px;
+    text-align:center;
+}
+
+.print-area{
+    text-align:center;
+    margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Input Barcode Sesuai Nomor</h2>
+
+    <label>Nama Barang</label>
+    <input type="text" id="namaBarang" placeholder="Masukkan Nama Barang">
+
+    <label>Nomor Barcode</label>
+    <input type="text" id="kodeBarcode" placeholder="Masukkan Nomor Barcode">
+
+    <button onclick="simpanData()">Simpan & Buat Barcode</button>
+
+    <div class="print-area">
+        <svg id="barcode"></svg>
+        <br>
+        <button onclick="printBarcode()">Print Barcode</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nama Barang</th>
+                <th>Kode Barcode</th>
+            </tr>
+        </thead>
+        <tbody id="dataTable"></tbody>
+    </table>
+</div>
+
+<script>
+
+loadData();
+
+function simpanData(){
+    let nama = document.getElementById("namaBarang").value.trim();
+    let kode = document.getElementById("kodeBarcode").value.trim();
+
+    if(nama === "" || kode === ""){
+        alert("Nama dan Nomor Barcode harus diisi!");
+        return;
+    }
+
+    // Generate barcode sesuai input
+    JsBarcode("#barcode", kode, {
+        format:"CODE128",
+        width:2,
+        height:60,
+        displayValue:true
+    });
+
+    let data = JSON.parse(localStorage.getItem("dataBarang")) || [];
+
+    // Cek jika barcode sudah ada
+    let cek = data.find(item => item.kode === kode);
+    if(cek){
+        alert("Barcode sudah ada!");
+        return;
+    }
+
+    data.push({
+        nama: nama,
+        kode: kode
+    });
+
+    localStorage.setItem("dataBarang", JSON.stringify(data));
+
+    document.getElementById("namaBarang").value="";
+    document.getElementById("kodeBarcode").value="";
+
+    loadData();
+}
+
+function loadData(){
+    let data = JSON.parse(localStorage.getItem("dataBarang")) || [];
+    let table = document.getElementById("dataTable");
+    table.innerHTML="";
+
+    data.forEach(item=>{
+        table.innerHTML += `
+            <tr>
+                <td>${item.nama}</td>
+                <td>${item.kode}</td>
+            </tr>
+        `;
+    });
+}
+
+function printBarcode(){
+    let printContents = document.getElementById("barcode").outerHTML;
+    let win = window.open("", "", "width=400,height=300");
+    win.document.write(printContents);
+    win.document.close();
+    win.print();
+}
+
+</script>
+
+</body>
+</html>

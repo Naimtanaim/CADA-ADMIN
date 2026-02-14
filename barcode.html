@@ -15,7 +15,7 @@ body{
 }
 
 .container{
-    max-width:500px;
+    max-width:600px;
     margin:auto;
     background:white;
     padding:20px;
@@ -46,14 +46,8 @@ th, td{
     text-align:center;
 }
 
-.print-area{
-    text-align:center;
-    margin-top:20px;
-}
-
 button{
-    margin-top:10px;
-    padding:8px 15px;
+    padding:5px 10px;
     background:#007bff;
     color:white;
     border:none;
@@ -71,16 +65,13 @@ button{
            placeholder="Scan barcode di sini..."
            autofocus>
 
-    <div class="print-area">
-        <svg id="barcode"></svg><br>
-        <button onclick="printBarcode()">Print</button>
-    </div>
-
     <table>
         <thead>
             <tr>
                 <th>No</th>
                 <th>Barcode</th>
+                <th>Preview</th>
+                <th>Print</th>
             </tr>
         </thead>
         <tbody id="dataTable"></tbody>
@@ -89,7 +80,6 @@ button{
 
 <script>
 
-let nomor = 1;
 loadData();
 
 document.getElementById("barcodeInput")
@@ -105,9 +95,8 @@ function simpanData(){
 
     let data = JSON.parse(localStorage.getItem("dataBarcode")) || [];
 
-    // Cek jika sudah ada
     if(data.find(item => item.kode === kode)){
-        alert("Barcode sudah tersimpan!");
+        alert("Barcode sudah ada!");
         document.getElementById("barcodeInput").value="";
         return;
     }
@@ -118,14 +107,6 @@ function simpanData(){
     });
 
     localStorage.setItem("dataBarcode", JSON.stringify(data));
-
-    // Tampilkan barcode
-    JsBarcode("#barcode", kode, {
-        format:"CODE128",
-        width:2,
-        height:60,
-        displayValue:true
-    });
 
     document.getElementById("barcodeInput").value="";
     loadData();
@@ -141,17 +122,47 @@ function loadData(){
             <tr>
                 <td>${item.no}</td>
                 <td>${item.kode}</td>
+                <td><svg id="barcode_${item.no}"></svg></td>
+                <td><button onclick="printBarcode('${item.kode}')">Print</button></td>
             </tr>
         `;
     });
+
+    // Generate semua barcode di tabel
+    data.forEach(item=>{
+        JsBarcode(`#barcode_${item.no}`, item.kode, {
+            format:"CODE128",
+            width:1.5,
+            height:40,
+            displayValue:false
+        });
+    });
 }
 
-function printBarcode(){
-    let printContents = document.getElementById("barcode").outerHTML;
+function printBarcode(kode){
     let win = window.open("", "", "width=400,height=300");
-    win.document.write(printContents);
+
+    win.document.write(`
+        <html>
+        <head>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+        </head>
+        <body style="text-align:center;">
+            <svg id="printBarcode"></svg>
+            <script>
+                JsBarcode("#printBarcode", "${kode}", {
+                    format:"CODE128",
+                    width:2,
+                    height:70,
+                    displayValue:true
+                });
+                window.print();
+            <\/script>
+        </body>
+        </html>
+    `);
+
     win.document.close();
-    win.print();
 }
 
 </script>

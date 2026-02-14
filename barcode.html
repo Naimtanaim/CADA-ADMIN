@@ -28,7 +28,7 @@ h2{
 }
 
 input{
-    width:100%;
+    width: 96%;
     padding:12px;
     font-size:18px;
     text-align:center;
@@ -59,13 +59,41 @@ button{
     margin-top:15px;
 }
 
-/* Saat print */
+
 @media print{
-    button, input, h2 {
-        display:none;
-    }
+
     body{
-        background:white;
+        background:white !important;
+    }
+
+    .container{
+        box-shadow:none !important;
+        border:none !important;
+    }
+
+    h2, input, button, .scan-box, .info{
+        display:none !important;
+    }
+
+    table{
+        width:100% !important;
+        border-collapse:collapse !important;
+    }
+
+    thead{
+        background:white !important;
+        color:black !important;
+    }
+
+    th, td{
+        border:1px solid black !important;
+        color:black !important;
+        font-size:12px;
+        padding:5px !important;
+    }
+
+    tbody tr{
+        background:white !important;
     }
 }
 </style>

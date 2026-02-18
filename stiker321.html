@@ -2,149 +2,175 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Box Label Generator</title>
+<title>Box Label</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        gap: 40px;
-        padding: 20px;
-    }
 
-    .form-section {
-        width: 300px;
-    }
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    padding:20px;
+}
 
-    .form-section input {
-        width: 100%;
-        padding: 5px;
-        margin-bottom: 10px;
-    }
+.wrapper{
+    display:flex;
+    gap:40px;
+}
 
-    .label {
-        width: 450px;
-        border: 3px solid black;
-        padding: 10px;
-    }
+/* ===== FORM ===== */
+.form-section{
+    width:280px;
+}
 
-    .row {
-        display: flex;
-        border-bottom: 2px solid black;
-    }
+.form-section input{
+    width:100%;
+    margin-bottom:8px;
+    padding:5px;
+}
 
-    .row:last-child {
-        border-bottom: none;
-    }
+.form-section button{
+    width:100%;
+    padding:8px;
+    font-weight:bold;
+}
 
-    .cell {
-        flex: 1;
-        padding: 10px;
-        border-right: 2px solid black;
-    }
+/* ===== LABEL ===== */
+.label{
+    width:500px;
+    border:4px solid #000;
+    font-size:18px;
+}
 
-    .cell:last-child {
-        border-right: none;
-    }
+.row{
+    display:flex;
+    border-bottom:3px solid #000;
+}
 
-    .barcode {
-        margin-top: 5px;
-        height: 40px;
-        background: repeating-linear-gradient(
-            90deg,
-            black 0px,
-            black 2px,
-            white 2px,
-            white 4px
-        );
-    }
+.row:last-child{
+    border-bottom:none;
+}
 
-    h3 {
-        margin: 0 0 5px 0;
-        font-size: 16px;
-    }
+.col{
+    flex:1;
+    padding:10px;
+    border-right:3px solid #000;
+}
+
+.col:last-child{
+    border-right:none;
+}
+
+.title{
+    font-weight:bold;
+    letter-spacing:1px;
+}
+
+.value{
+    margin-top:5px;
+    font-size:20px;
+}
+
+.barcode{
+    margin-top:8px;
+    height:45px;
+    background: repeating-linear-gradient(
+        90deg,
+        #000 0px,
+        #000 2px,
+        #fff 2px,
+        #fff 4px
+    );
+}
+
+.center{
+    text-align:center;
+}
+
 </style>
 </head>
 
 <body>
 
+<div class="wrapper">
+
+<!-- FORM -->
 <div class="form-section">
-    <h2>Input Data</h2>
-
-    <input type="text" id="partNumber" placeholder="TFV Part Number">
-    <input type="text" id="date" placeholder="Date">
+    <h3>Input Data</h3>
+    <input type="text" id="partNumber" placeholder="TFV PART NUMBER">
+    <input type="text" id="date" placeholder="DATE">
     <input type="text" id="qty" placeholder="QTY">
-    <input type="text" id="boxNo" placeholder="Box No">
+    <input type="text" id="boxNo" placeholder="BOX NO">
     <input type="text" id="po" placeholder="PO">
-    <input type="text" id="gross" placeholder="Gross Weight">
-    <input type="text" id="net" placeholder="Net Weight">
-    <input type="text" id="supplier" placeholder="Supplier">
-
+    <input type="text" id="gross" placeholder="GROSS WEIGHT">
+    <input type="text" id="net" placeholder="NET WEIGHT">
+    <input type="text" id="supplier" placeholder="SUPPLIER">
     <button onclick="updateLabel()">Update Label</button>
 </div>
 
+<!-- LABEL -->
 <div class="label">
+
+    <!-- Row 1 -->
     <div class="row">
-        <div class="cell">
-            <h3>TFV PART NUMBER:</h3>
-            <div id="previewPart">309-3780</div>
+        <div class="col">
+            <div class="title">TFV PART NUMBER: <span id="previewPart">309-3780</span></div>
             <div class="barcode"></div>
         </div>
-        <div class="cell">
-            <h3>DATE</h3>
-            <div id="previewDate">FEBRUARY, 2026</div>
+        <div class="col center">
+            <div class="title">DATE</div>
+            <div class="value" id="previewDate">FEBRUARY, 2026</div>
         </div>
     </div>
 
+    <!-- Row 2 -->
     <div class="row">
-        <div class="cell">
-            <h3>QTY:</h3>
-            <div id="previewQty">50</div>
+        <div class="col">
+            <div class="title">QTY: <span id="previewQty">50</span></div>
             <div class="barcode"></div>
         </div>
-        <div class="cell">
-            <h3>BOX NO:</h3>
-            <div id="previewBox">90</div>
-            <div class="barcode"></div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="cell">
-            <h3>PO:</h3>
-            <div id="previewPO">4500170216</div>
+        <div class="col">
+            <div class="title">BOX NO: <span id="previewBox">90</span></div>
             <div class="barcode"></div>
         </div>
     </div>
 
+    <!-- Row 3 -->
     <div class="row">
-        <div class="cell">
-            <h3>GROSS WEIGHT:</h3>
-            <div id="previewGross">18.83 KG</div>
-        </div>
-        <div class="cell">
-            <h3>SUPPLIER</h3>
-            <div id="previewSupplier">CADA</div>
+        <div class="col">
+            <div class="title">PO: <span id="previewPO">4500170216</span></div>
+            <div class="barcode"></div>
         </div>
     </div>
 
+    <!-- Row 4 -->
     <div class="row">
-        <div class="cell">
-            <h3>NET WEIGHT:</h3>
-            <div id="previewNet">18.13 KG</div>
+        <div class="col">
+            <div class="title">GROSS WEIGHT: <span id="previewGross">18.83KG</span></div>
+        </div>
+        <div class="col center">
+            <div class="title">SUPPLIER</div>
+            <div class="value" id="previewSupplier">CADA</div>
         </div>
     </div>
+
+    <!-- Row 5 -->
+    <div class="row">
+        <div class="col">
+            <div class="title">NET WEIGHT: <span id="previewNet">18.13KG</span></div>
+        </div>
+    </div>
+
+</div>
 </div>
 
 <script>
-function updateLabel() {
-    document.getElementById("previewPart").innerText = document.getElementById("partNumber").value;
-    document.getElementById("previewDate").innerText = document.getElementById("date").value;
-    document.getElementById("previewQty").innerText = document.getElementById("qty").value;
-    document.getElementById("previewBox").innerText = document.getElementById("boxNo").value;
-    document.getElementById("previewPO").innerText = document.getElementById("po").value;
-    document.getElementById("previewGross").innerText = document.getElementById("gross").value;
-    document.getElementById("previewNet").innerText = document.getElementById("net").value;
-    document.getElementById("previewSupplier").innerText = document.getElementById("supplier").value;
+function updateLabel(){
+    previewPart.innerText = partNumber.value;
+    previewDate.innerText = date.value;
+    previewQty.innerText = qty.value;
+    previewBox.innerText = boxNo.value;
+    previewPO.innerText = po.value;
+    previewGross.innerText = gross.value;
+    previewNet.innerText = net.value;
+    previewSupplier.innerText = supplier.value;
 }
 </script>
 

@@ -30,6 +30,7 @@ body{
     width:100%;
     padding:8px;
     font-weight:bold;
+    margin-bottom:5px;
 }
 
 /* ===== LABEL ===== */
@@ -84,6 +85,25 @@ body{
     text-align:center;
 }
 
+/* ===== PRINT STYLE ===== */
+@media print {
+
+    body * {
+        visibility: hidden;
+    }
+
+    .label, .label * {
+        visibility: visible;
+    }
+
+    .label {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
+
 </style>
 </head>
 
@@ -102,13 +122,14 @@ body{
     <input type="text" id="gross" placeholder="GROSS WEIGHT">
     <input type="text" id="net" placeholder="NET WEIGHT">
     <input type="text" id="supplier" placeholder="SUPPLIER">
+    
     <button onclick="updateLabel()">Update Label</button>
+    <button onclick="printLabel()">Print Label</button>
 </div>
 
 <!-- LABEL -->
 <div class="label">
 
-    <!-- Row 1 -->
     <div class="row">
         <div class="col">
             <div class="title">TFV PART NUMBER: <span id="previewPart">309-3780</span></div>
@@ -120,7 +141,6 @@ body{
         </div>
     </div>
 
-    <!-- Row 2 -->
     <div class="row">
         <div class="col">
             <div class="title">QTY: <span id="previewQty">50</span></div>
@@ -132,7 +152,6 @@ body{
         </div>
     </div>
 
-    <!-- Row 3 -->
     <div class="row">
         <div class="col">
             <div class="title">PO: <span id="previewPO">4500170216</span></div>
@@ -140,7 +159,6 @@ body{
         </div>
     </div>
 
-    <!-- Row 4 -->
     <div class="row">
         <div class="col">
             <div class="title">GROSS WEIGHT: <span id="previewGross">18.83KG</span></div>
@@ -151,7 +169,6 @@ body{
         </div>
     </div>
 
-    <!-- Row 5 -->
     <div class="row">
         <div class="col">
             <div class="title">NET WEIGHT: <span id="previewNet">18.13KG</span></div>
@@ -171,6 +188,10 @@ function updateLabel(){
     previewGross.innerText = gross.value;
     previewNet.innerText = net.value;
     previewSupplier.innerText = supplier.value;
+}
+
+function printLabel(){
+    window.print();
 }
 </script>
 

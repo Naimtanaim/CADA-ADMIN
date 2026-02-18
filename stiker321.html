@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Box Label Generator</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        gap: 40px;
+        padding: 20px;
+    }
+
+    .form-section {
+        width: 300px;
+    }
+
+    .form-section input {
+        width: 100%;
+        padding: 5px;
+        margin-bottom: 10px;
+    }
+
+    .label {
+        width: 450px;
+        border: 3px solid black;
+        padding: 10px;
+    }
+
+    .row {
+        display: flex;
+        border-bottom: 2px solid black;
+    }
+
+    .row:last-child {
+        border-bottom: none;
+    }
+
+    .cell {
+        flex: 1;
+        padding: 10px;
+        border-right: 2px solid black;
+    }
+
+    .cell:last-child {
+        border-right: none;
+    }
+
+    .barcode {
+        margin-top: 5px;
+        height: 40px;
+        background: repeating-linear-gradient(
+            90deg,
+            black 0px,
+            black 2px,
+            white 2px,
+            white 4px
+        );
+    }
+
+    h3 {
+        margin: 0 0 5px 0;
+        font-size: 16px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="form-section">
+    <h2>Input Data</h2>
+
+    <input type="text" id="partNumber" placeholder="TFV Part Number">
+    <input type="text" id="date" placeholder="Date">
+    <input type="text" id="qty" placeholder="QTY">
+    <input type="text" id="boxNo" placeholder="Box No">
+    <input type="text" id="po" placeholder="PO">
+    <input type="text" id="gross" placeholder="Gross Weight">
+    <input type="text" id="net" placeholder="Net Weight">
+    <input type="text" id="supplier" placeholder="Supplier">
+
+    <button onclick="updateLabel()">Update Label</button>
+</div>
+
+<div class="label">
+    <div class="row">
+        <div class="cell">
+            <h3>TFV PART NUMBER:</h3>
+            <div id="previewPart">309-3780</div>
+            <div class="barcode"></div>
+        </div>
+        <div class="cell">
+            <h3>DATE</h3>
+            <div id="previewDate">FEBRUARY, 2026</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="cell">
+            <h3>QTY:</h3>
+            <div id="previewQty">50</div>
+            <div class="barcode"></div>
+        </div>
+        <div class="cell">
+            <h3>BOX NO:</h3>
+            <div id="previewBox">90</div>
+            <div class="barcode"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="cell">
+            <h3>PO:</h3>
+            <div id="previewPO">4500170216</div>
+            <div class="barcode"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="cell">
+            <h3>GROSS WEIGHT:</h3>
+            <div id="previewGross">18.83 KG</div>
+        </div>
+        <div class="cell">
+            <h3>SUPPLIER</h3>
+            <div id="previewSupplier">CADA</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="cell">
+            <h3>NET WEIGHT:</h3>
+            <div id="previewNet">18.13 KG</div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateLabel() {
+    document.getElementById("previewPart").innerText = document.getElementById("partNumber").value;
+    document.getElementById("previewDate").innerText = document.getElementById("date").value;
+    document.getElementById("previewQty").innerText = document.getElementById("qty").value;
+    document.getElementById("previewBox").innerText = document.getElementById("boxNo").value;
+    document.getElementById("previewPO").innerText = document.getElementById("po").value;
+    document.getElementById("previewGross").innerText = document.getElementById("gross").value;
+    document.getElementById("previewNet").innerText = document.getElementById("net").value;
+    document.getElementById("previewSupplier").innerText = document.getElementById("supplier").value;
+}
+</script>
+
+</body>
+</html>
